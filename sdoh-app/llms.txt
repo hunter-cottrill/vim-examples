@@ -1,0 +1,104 @@
+# Vim App SDK — LLM Context (llms.txt)
+
+> For AI coding agents (Claude Code, Cursor, etc.) building apps on `@vimconnect/app-sdk`.
+> The SDK is niche; agents routinely hallucinate methods that don't exist. This file is
+> the verified surface. When in doubt, read the installed types at
+> `node_modules/@vimconnect/app-sdk/dist/index.d.ts` — that is ground truth, above any docs page.
+
+## What the SDK is
+An in-page client that loads from a CDN and bridges to the Vim Connect Chrome extension
+over a MessageChannel. Your app runs as an iframe inside the Vim Hub, injected into a
+web EHR. One app runs unmodified across many EHRs because the extension normalizes each
+into one event/entity model.
+
+## Package facts
+- `@vimconnect/app-sdk`, ESM-only. Types at `dist/index.d.ts`.
+- **Peer-depends on Zod v4** (not v3). Pin `zod@^4`.
+- Verified against **v0.4.50**. Pre-1.0 — re-verify signatures on upgrade via `npm pack`.
+- Zod schemas exported for every entity/shared type: `PatientSchema`, `EncounterSchema`,
+  `DiagnosisSchema`, `ProcedureSchema`, `ProviderSchema`, `DemographicsSchema`, …
+
+## Two entry points (do not conflate)
+- **UI app** — `initVimSDK({ accessToken })`. Visible sidebar. Subscribes:
+  `sdk.ehr.workflow.on(...)`, `sdk.ehr.context.onChange(...)`.
+- **Worker app** — `initWorkerVimSDK(...)`. Headless. Registers handlers:
+  `worker.ehr.context.register(key, { operations, fields }, (data, handle) => ...)`.
+  Handles have a **10-second TTL** — check `handle.isValid()` / register `onInvalidated`
+  before use and after any `await`.
+
+## Auth (OAuth launch flow) — required shape
+1. Extension opens your Launch endpoint as `/launch?launch_id=abc123`.
+2. Redirect to `{backend}/app-auth/authorize` with: `response_type=code`, `client_id`,
+   `launch=abc123`, `scope="launch openid"`, `redirect_uri={origin}/app`,
+   `state="abc123:<csrf>"`.
+3. Vim redirects to `/app?code=...&state=...`. Validate CSRF from state.
+4. Your server route POSTs **JSON** (NOT form-urlencoded, NO redirect_uri) to
+   `{backend}/app-auth/token`: `{ grant_type:"authorization_code", code, client_id, client_secret }`.
+5. `initVimSDK({ accessToken })` → `sdk.hub.setActivationStatus("ENABLED")`.
+- Backend host is `api.getvim.ai` (prod) / `api.stage.getvim.ai` (staging). Note: `api.`, not `app.`
+- Auth codes are single-use; there is no refresh flow. Expiry → re-launch from the Hub.
+- `CLIENT_SECRET` is server-only. Only `NEXT_PUBLIC_*` reaches the browser.
+
+## Reads (Entity API)
+- `sdk.ehr.api.patient.getPatient()` → `ApiResponse<Patient>`
+- `sdk.ehr.api.patient.getProblems()` → `ApiResponse<Diagnosis[]>`
+- Context data arrives under `curr.fields` in `onChange(key, (prev, curr) => ...)`.
+- **A method existing in the .d.ts does NOT guarantee it's implemented in a given EHR
+  build.** e.g. `getLabResults`/`getAllergies` can throw `TypeError: not a function` at
+  runtime. Guard every Entity API call: check `typeof fn === "function"` and catch throws,
+  or a synchronous throw inside a `Promise.allSettled([...])` array literal will reject
+  before allSettled can catch it and silently abort your whole run.
+
+## Writeback ceremony (the core pattern — fixed order)
+```ts
+const cap = sdk.ehr.context.encounter.getCapability('update');
+// { available, disruptive, permissionState, updatableFields }.  getCapability takes NO fields arg.
+if (cap.disruptive && cap.permissionState === 'requestable')
+  await sdk.ehr.context.encounter.requestPermission('update', { fields: ['assessment.diagnoses'] });
+if (sdk.ehr.context.encounter.hasPermission('update'))
+  await sdk.ehr.context.encounter.update(
+    { assessment: { diagnoses: [{ code: 'I10', description: '...' }] } }, // NESTED object
+    { mode: 'append' } // 'override' | 'append' only — NO 'merge'
+  );
+```
+- `update()` takes a **nested object**; dot-notation keys throw `INVALID_DATA`.
+- Errors: `ENTITY_NOT_IN_CONTEXT`, `OPERATION_NOT_CONFIGURED`, `PERMISSION_REQUIRED`, `INVALID_DATA`.
+- Permission states: `granted | requestable | denied`.
+
+## Worker suggestWriteback (agent-driven, native Agree/Disagree in the Hub)
+```ts
+worker.ehr.context.register(key, { operations: ['notify','suggestWriteback'], fields }, (data, handle) => {
+  handle.ehr.context.suggestWriteback({
+    entity: 'encounter', fields: string[], notification,
+    onGranted: async (wb) => { await wb.ehr.encounter.update({ ... }); }, // pre-authorized here
+    onDenied, onTimeout, onInvalidated,
+  });
+});
+```
+- Throws if the UI app is open; one-shot (auto-closes the handle).
+
+## CPT-II / procedure codes
+- Write via `sdk.ehr.api.encounter.updateProcedureCodes(data)` (NOT `updateBillingCodes`).
+- Field path: `billingInformation.procedureCodes: Procedure[]` where `Procedure = { code?, description? }`.
+- No `getCapability` exists for this path — it's a direct API call; wrap in try/catch.
+
+## What does NOT exist (do not invent these)
+- **No insights/gaps API** — cannot read Care-Insights-computed gaps; derive from raw resources.
+- **No problem-list write** — only `getProblems()` (read). Write the code as an encounter
+  diagnosis instead.
+- **No medication/prescription write.**
+- **No CRM / coordinator / task / worklist API** — do that in your own backend.
+- **No `sdk.ehr.api.referral` namespace** (only patient/encounter/order are declared).
+  For referral data, subscribe to the `referral_start:referral` context key.
+
+## Notifications
+- `sdk.hub.pushNotification.show({ notificationId, title, text, type, timeoutInSec, onTap, launchPayload })`.
+- `type`: `info | warning | success | critical`. `critical` disables auto-dismiss and
+  requires `onAcknowledge` — use it for safety flags only.
+- Tapped notification `launchPayload` → read in UI via `sdk.consumeLaunchContext()`.
+
+## Framework notes (Next.js App Router)
+- `useSearchParams()` requires a `<Suspense>` wrapper.
+- Guard init/redirect effects with a `useRef` so React StrictMode doesn't double-fire.
+- Port is not fixed by Vim — it must match your registered App URL and redirect URI. Keep
+  the running port, registered URLs, and redirect URI consistent.

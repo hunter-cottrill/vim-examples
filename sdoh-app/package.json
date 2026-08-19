@@ -1,0 +1,28 @@
+{
+  "name": "vim-sdoh-app",
+  "version": "0.1.0",
+  "description": "SDOH starter app on the Vim Connect SDK — surfaces social-need Z-codes at the point of care",
+  "license": "MIT",
+  "private": true,
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "dev": "next dev -p 8080",
+    "build": "next build",
+    "start": "next start -p 8080",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@vimconnect/app-sdk": "0.4.53",
+    "next": "^16.2.12",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.5.3",
+    "vitest": "^4.1.1"
+  }
+}
