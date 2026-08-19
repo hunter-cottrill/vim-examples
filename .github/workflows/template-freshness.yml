@@ -1,0 +1,41 @@
+name: template-freshness
+
+# The SDK is pre-1.0 and moving. A stale starter template is worse than none.
+# This reinstalls every template against the latest compatible SDK, type-checks,
+# builds, and runs the Vitest suites — on every push and weekly — so the
+# "tested against vX.Y" claim on the docs stays true.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 13 * * 1" # Mondays 13:00 UTC
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        template: [cds-app, sdoh-app]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install
+        working-directory: templates/${{ matrix.template }}
+        run: npm install
+      - name: Report resolved SDK version
+        working-directory: templates/${{ matrix.template }}
+        run: npm ls @vimconnect/app-sdk || true
+      - name: Type-check
+        working-directory: templates/${{ matrix.template }}
+        run: npm run type-check
+      - name: Test (Vitest)
+        working-directory: templates/${{ matrix.template }}
+        run: npm test
+      - name: Build
+        working-directory: templates/${{ matrix.template }}
+        run: npm run build
