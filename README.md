@@ -9,13 +9,13 @@ config helpers, OAuth flow, and tooling — then branched for its use case.
 
 | Template | Use case | Shows |
 |---|---|---|
-| [`cds-app`](templates/cds-app) | Clinical Decision Support | UI + offscreen worker, LLM-ranked (vocabulary-bound) code suggestions, permission-gated writeback |
-| [`sdoh-app`](templates/sdoh-app) | Social Determinants of Health | UI app, deterministic rules, Z-code writeback, referral-aware detection |
+| [`cds-app`](cds-app) | Clinical Decision Support | UI + offscreen worker, LLM-ranked (vocabulary-bound) code suggestions, permission-gated writeback |
+| [`sdoh-app`](sdoh-app) | Social Determinants of Health | UI app, deterministic rules, Z-code writeback, referral-aware detection |
 
 ## Grab one template
 
 ```bash
-npx degit hunter-cottrill/vim-examples/templates/sdoh-app my-app
+npx degit hunter-cottrill/vim-examples/sdoh-app my-app
 cd my-app
 cp .env.local.example .env.local   # fill in from the Vim developer portal
 npm install
@@ -30,9 +30,19 @@ Both templates follow the Vim demo app's standards: `src/app` layout with `launc
 branch from that baseline only where the use case requires.
 
 ## For AI coding agents
-Every template ships `CLAUDE.md` + `llms.txt` with the **verified** SDK surface, so Claude
-Code / Cursor build against real methods instead of hallucinating them. If a docs page and the
-installed types disagree, the types win (`node_modules/@vimconnect/app-sdk/dist/index.d.ts`).
+Every template ships a `CLAUDE.md` so Claude Code / Cursor build against real SDK methods
+instead of hallucinating them. For the live SDK reference, install the docs skill that ships
+with the SDK — it points the agent at the site's `llms.txt` / `llms-full.txt`:
+
+```bash
+mkdir -p .claude/skills
+cp -r node_modules/@vimconnect/app-sdk/skills/vim-app-sdk-docs .claude/skills/vim-app-sdk-docs
+```
+
+## Building your own app?
+Start from the reusable prompt in [`docs/build-a-vim-app-prompt.md`](docs/build-a-vim-app-prompt.md).
+Fill in your use case and an AI agent will plan a Vim SDK app grounded in the official SDK
+reference. Works for any use case — CDS, SDOH, prior auth, referral management, and more.
 
 ## Freshness
 CI reinstalls, type-checks, tests (Vitest), and builds every template against the latest SDK
