@@ -1,0 +1,43 @@
+{
+  "name": "vim-price-transparency-app",
+  "version": "1.0.0",
+  "description": "Price transparency starter app on the Vim Connect SDK \u2014 shows the patient's estimated cost when a provider places an order",
+  "license": "MIT",
+  "keywords": [
+    "vim-connect",
+    "sdk",
+    "nextjs",
+    "healthcare",
+    "ehr",
+    "ehr-integration",
+    "price-transparency"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "next dev -p 8080",
+    "build": "next build",
+    "start": "next start -p 8080",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@vimconnect/app-sdk": "0.4.56",
+    "next": "^16.2.12",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/node": "^20.14.10",
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.0.0",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.5.3",
+    "vitest": "^4.1.1"
+  }
+}
