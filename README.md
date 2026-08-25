@@ -15,7 +15,7 @@ config helpers, OAuth flow, and tooling — then branched for its use case.
 ## Grab one template
 
 ```bash
-npx degit hunter-cottrill/vim-examples/sdoh-app my-app
+npx degit hunter-cottrill/vim-examples/templates/sdoh-app my-app
 cd my-app
 cp .env.local.example .env.local   # fill in from the Vim developer portal
 npm install
