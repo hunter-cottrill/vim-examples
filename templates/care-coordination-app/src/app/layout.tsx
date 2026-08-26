@@ -5,8 +5,8 @@ import { buildClientConfig } from '@/lib/client-config';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'SDOH Assistant',
-  description: 'Flags social needs that could get in the way of care, and points to help',
+  title: 'Care Coordination',
+  description: 'Care coordination snapshot app on the Vim Connect SDK',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

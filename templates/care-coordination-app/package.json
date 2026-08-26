@@ -1,12 +1,10 @@
 {
-  "name": "vim-sdoh-app",
+  "name": "vim-care-coordination-app",
   "version": "0.1.0",
-  "description": "SDOH flagging app on the Vim Connect SDK \u2014 surfaces social-need Z-codes when a provider opens a patient's chart, with retry-hardened reads, a Worker notification path, and a dev simulator",
+  "description": "Care coordination starter app on the Vim Connect SDK — an honest current-session snapshot of recent activity, orders on record, and providers referenced, so nothing gets repeated",
   "license": "MIT",
   "private": true,
-  "engines": {
-    "node": ">=18"
-  },
+  "engines": { "node": ">=18" },
   "scripts": {
     "dev": "next dev -p 8080",
     "build": "next build",
@@ -15,11 +13,10 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@vimconnect/app-sdk": "0.4.56",
+    "@vimconnect/app-sdk": "0.4.53",
     "next": "^16.2.12",
     "react": "^19.2.3",
-    "react-dom": "^19.2.3",
-    "zod": "^4.4.3"
+    "react-dom": "^19.2.3"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",
