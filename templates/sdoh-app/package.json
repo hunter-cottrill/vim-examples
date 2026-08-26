@@ -1,10 +1,12 @@
 {
   "name": "vim-sdoh-app",
   "version": "0.1.0",
-  "description": "SDOH starter app on the Vim Connect SDK — surfaces social-need Z-codes at the point of care",
+  "description": "SDOH flagging app on the Vim Connect SDK \u2014 surfaces social-need Z-codes when a provider opens a patient's chart, with retry-hardened reads, a Worker notification path, and a dev simulator",
   "license": "MIT",
   "private": true,
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "next dev -p 8080",
     "build": "next build",
@@ -13,10 +15,11 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@vimconnect/app-sdk": "0.4.53",
+    "@vimconnect/app-sdk": "0.4.56",
     "next": "^16.2.12",
     "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "react-dom": "^19.2.3",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",
