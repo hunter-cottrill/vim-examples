@@ -1,0 +1,88 @@
+# Vim App SDK — LLM Context (llms.txt)
+
+> For AI coding agents (Claude Code, Cursor, etc.) building on `@vimconnect/app-sdk`.
+> The SDK is niche; agents routinely hallucinate methods that don't exist. This
+> file is the verified surface for THIS app. When in doubt, read the installed
+> types at `node_modules/@vimconnect/app-sdk/dist/index.d.ts` — that is ground
+> truth, above any docs page.
+
+## What the SDK is
+
+An in-page client that loads from a CDN and bridges to the Vim Connect Chrome
+extension over a MessageChannel. This app runs as an iframe inside the Vim Hub,
+injected into a web EHR. One app runs unmodified across many EHRs because the
+extension normalizes each into one event/entity model.
+
+## Package facts
+
+- `@vimconnect/app-sdk`, ESM-only. Types at `dist/index.d.ts`.
+- Pinned at `0.4.53` in `package.json` — pre-1.0. Re-verify signatures on upgrade.
+
+## One entry point (this app has no Worker)
+
+- **UI app** — `initVimSDK({ accessToken })`. Visible sidebar. Subscribes:
+  `sdk.ehr.workflow.on(...)`, `sdk.ehr.context.onChange(...)`.
+- This app does not use `initWorkerVimSDK` — `chart_open` already puts the
+  provider in front of the open panel, so a Worker would add nothing.
+
+## Auth (OAuth launch flow) — required shape
+
+1. Extension opens the Launch endpoint as `/launch?launch_id=abc123`.
+2. Redirect to `{backend}/app-auth/authorize` with: `response_type=code`,
+   `client_id`, `launch=abc123`, `scope="launch openid"`,
+   `redirect_uri={origin}/app`, `state="abc123:<csrf>"`.
+3. Vim redirects to `/app?code=...&state=...`. Validate CSRF from state.
+4. The server route POSTs **JSON** (NOT form-urlencoded, NO redirect_uri) to
+   `{backend}/app-auth/token`: `{ grant_type:"authorization_code", code,
+   client_id, client_secret }`.
+5. `initVimSDK({ accessToken })` → `sdk.hub.setActivationStatus("ENABLED")`.
+- Backend host is `api.getvim.ai` (prod) / `api.stage.getvim.ai` (staging).
+- Auth codes are single-use; there is no refresh flow. Expiry → re-launch from
+  the Hub.
+- `CLIENT_SECRET` is server-only. Only `NEXT_PUBLIC_*` reaches the browser.
+
+## Reads used by this app
+
+- `sdk.ehr.workflow.on('chart_open', ...)` → bare id reference, one-shot.
+- `sdk.ehr.context.onChange('chart_open:patient' | 'encounter_open:patient', ...)`
+  → `curr.fields`, used only as a fallback signal that a patient is in view.
+- `sdk.ehr.api.patient.getPatient()` → `ApiResponse<Patient>` (no-arg — resolves
+  from current context).
+- `sdk.ehr.api.patient.getProblems()` → `ApiResponse<Diagnosis[]>` (no-arg).
+- `sdk.ehr.context.onChange('encounter_open:encounter', ...)` → `curr.fields`
+  (current visit only — no history list exists).
+- `sdk.ehr.workflow.on('order_select', ...)` → bare id reference, one-shot, then
+  `sdk.ehr.api.order.getOrderById()` (no-arg) for whatever single order is in
+  context. **No CPT/procedure code field. No status field** (open/closed).
+- `sdk.ehr.context.onChange('referral_start:referral', ...)` → `curr.fields`.
+  **There is no `sdk.ehr.api.referral` namespace** — this context key is the
+  only source.
+- A method existing in the `.d.ts` does NOT guarantee it's implemented in a
+  given EHR build — every Entity API call here is wrapped in retry-with-backoff
+  (`src/lib/retry.ts`) and treats `NOT_IMPLEMENTED` as `unsupported`, not `error`.
+
+## Writeback
+
+None. This app has no writeback ceremony anywhere — it is read-only by design.
+
+## What does NOT exist (do not invent)
+
+- **No patient-visit-history API** — only the current encounter is readable.
+- **No bulk open-orders list** — only whatever single order happens to be in
+  context via `order_select`.
+- **No care-team entity** — "other providers referenced" is derived from
+  whatever provider name fields are attached to an in-context order/referral,
+  never a full roster.
+- **No order status field** — do not infer open/closed from name/reason text.
+- **No insights/gaps API.**
+- **No `sdk.ehr.api.referral` namespace** (only patient/encounter/order are
+  declared). For referral data, subscribe to the `referral_start:referral`
+  context key.
+
+## Framework notes (Next.js App Router)
+
+- `useSearchParams()` requires a `<Suspense>` wrapper.
+- Guard init/redirect effects with a `useRef` so React StrictMode doesn't
+  double-fire.
+- Port is not fixed by Vim — it must match your registered App URL and redirect
+  URI. Keep the running port, registered URLs, and redirect URI consistent.
