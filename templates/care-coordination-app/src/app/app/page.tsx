@@ -33,6 +33,9 @@ function AppContent() {
   const [referral, setReferral] = useState<SectionStatus<ReferralSnapshot>>({ kind: 'empty' });
   const initRef = useRef(false);
   const sdkRef = useRef<VimSDK | null>(null);
+  const chartPatientPresentRef = useRef(false);
+  const encounterPatientPresentRef = useRef(false);
+  const viewGenerationRef = useRef(0);
 
   // Any signal that a patient is now in view — the chart_open workflow event,
   // or either patient context key arriving with fields — triggers the same
@@ -42,11 +45,34 @@ function AppContent() {
   function handlePatientInView() {
     const sdk = sdkRef.current;
     if (!sdk) return;
+    const generation = ++viewGenerationRef.current;
     setPatientIdResolved(true);
     setPatient({ kind: 'loading' });
     setProblems({ kind: 'loading' });
-    fetchPatientSnapshot(sdk).then(setPatient);
-    fetchProblems(sdk).then(setProblems);
+    fetchPatientSnapshot(sdk).then((r) => {
+      if (viewGenerationRef.current === generation) setPatient(r);
+    });
+    fetchProblems(sdk).then((r) => {
+      if (viewGenerationRef.current === generation) setProblems(r);
+    });
+  }
+
+  function handlePatientOutOfView() {
+    setPatientIdResolved(false);
+    setPatient({ kind: 'empty' });
+    setProblems({ kind: 'empty' });
+    setEncounter({ kind: 'empty' });
+    setOrder({ kind: 'empty' });
+    setReferral({ kind: 'empty' });
+    setError(null);
+  }
+
+  function reconcilePatientPresence() {
+    if (chartPatientPresentRef.current || encounterPatientPresentRef.current) {
+      handlePatientInView();
+    } else {
+      handlePatientOutOfView();
+    }
   }
 
   useEffect(() => {
@@ -80,12 +106,17 @@ function AppContent() {
         setReady(true);
 
         unsubscribers = [
-          onChartOpen(sdk, handlePatientInView),
+          onChartOpen(sdk, () => {
+            chartPatientPresentRef.current = true;
+            reconcilePatientPresence();
+          }),
           onChartOpenPatientContext(sdk, (fields) => {
-            if (fields) handlePatientInView();
+            chartPatientPresentRef.current = Boolean(fields);
+            reconcilePatientPresence();
           }),
           onEncounterOpenPatientContext(sdk, (fields) => {
-            if (fields) handlePatientInView();
+            encounterPatientPresentRef.current = Boolean(fields);
+            reconcilePatientPresence();
           }),
           onEncounterContext(sdk, (fields) => setEncounter(mapEncounterFields(fields))),
           onReferralContext(sdk, (fields) => setReferral(mapReferralFields(fields))),
