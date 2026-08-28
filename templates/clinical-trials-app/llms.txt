@@ -1,0 +1,101 @@
+# Vim App SDK — LLM Context (llms.txt)
+
+> For AI coding agents (Claude Code, Cursor, etc.) building apps on `@vimconnect/app-sdk`.
+> The SDK is niche; agents routinely hallucinate methods that don't exist. This file is
+> the verified surface. When in doubt, read the installed types at
+> `node_modules/@vimconnect/app-sdk/dist/index.d.ts` — that is ground truth, above any docs page.
+
+## What the SDK is
+
+An in-page client that loads from a CDN and bridges to the Vim Connect Chrome extension
+over a MessageChannel. Your app runs as an iframe inside the Vim Hub, injected into a
+web EHR. One app runs unmodified across many EHRs because the extension normalizes each
+into one event/entity model.
+
+## Package facts
+
+- `@vimconnect/app-sdk`, ESM-only. Types at `dist/index.d.ts`.
+- **Peer-depends on Zod v4** (not v3). Pin `zod@^4`.
+- Verified against **v0.4.56**. Pre-1.0 — re-verify signatures on upgrade via `npm pack`.
+
+## Entry point used by this app
+
+- **UI app** — `initVimSDK({ accessToken })`. Visible sidebar. Subscribes:
+  `sdk.ehr.workflow.on('chart_open', ...)`. This app has no Worker/offscreen surface — the
+  trigger already opens the panel, so there's nothing to surface headlessly (see
+  `CLAUDE.md`).
+
+## Auth (OAuth launch flow) — required shape
+
+1. Extension opens your Launch endpoint as `/launch?launch_id=abc123`.
+2. Redirect to `{backend}/app-auth/authorize` with: `response_type=code`, `client_id`,
+   `launch=abc123`, `scope="launch openid"`, `redirect_uri={origin}/app`,
+   `state="abc123:<csrf>"`.
+3. Vim redirects to `/app?code=...&state=...`. Validate CSRF from state.
+4. Your server route POSTs **JSON** (NOT form-urlencoded, NO redirect_uri) to
+   `{backend}/app-auth/token`: `{ grant_type:"authorization_code", code, client_id, client_secret }`.
+5. `initVimSDK({ accessToken })` → `sdk.hub.setActivationStatus("ENABLED")`.
+- Backend host is `api.getvim.ai` (prod) / `api.stage.getvim.ai` (staging). Note: `api.`, not `app.`
+- Auth codes are single-use; there is no refresh flow. Expiry → re-launch from the Hub.
+- `CLIENT_SECRET` is server-only. Only `NEXT_PUBLIC_*` reaches the browser.
+
+## Reads (Entity API) — the two this app uses
+
+- `sdk.ehr.api.patient.getPatient()` → `ApiResponse<Patient>` (`{success, data}` — unwrap `.data`).
+  `Patient.address.zipCode` is the field this app reads.
+- `sdk.ehr.api.patient.getProblems()` → `ApiResponse<Diagnosis[]>`. `Diagnosis` fields
+  used: `code`, `system` ("ICD-10, ICD-9, SNOMED-CT"), `status`, `description`, `onSetDate`.
+  **`system` is not reliably populated — confirmed live** against a Vim staging sandbox,
+  which returned problems with no `system` field at all (just `code`/`description`/
+  `status`). Don't gate matching logic on `system === 'ICD-10'` being present; gate only
+  on it being an *explicitly* different, known system instead (see `CLAUDE.md` golden
+  rule 8 and `condition-crosswalk.ts`).
+- Both have a no-arg overload (id resolves from current context) and a deprecated
+  `{patientId?}` overload — prefer no-arg.
+- A `chart_open` workflow event's `entities.patient` is typed as a full `Patient` object,
+  not just an id — but don't rely on it being fully populated at fire time; the Entity API
+  read is still the fresher/primary source, with the event's inline patient as a fallback.
+- `getPatient()`/`getProblems()` can reject with `ENTITY_NOT_IN_CONTEXT` in the same tick a
+  workflow event fires — a context-population race, not a real absence. Retry with backoff
+  (200/500/1000ms, `src/lib/retry.ts`) before giving up.
+
+## Writeback — not used in this app
+
+No writeback is built here. The ceremony exists (`getCapability('update')` →
+`requestPermission('update', {fields})` → `hasPermission('update')` →
+`update(nestedObject, {mode})`), but no entity offers a confirmed writable target for
+"trials of interest" — see `CLAUDE.md` golden rule 2. `update()`'s `mode` is
+`'override' | 'append'` only — no `'merge'`.
+
+## Error handling
+
+- `SDKError` is declared in the types but is not exported by the compiled runtime bundle —
+  don't use `instanceof SDKError`; duck-type on `(err as any)?.code` instead.
+- Errors this app may encounter: `ENTITY_NOT_IN_CONTEXT` (retry), and generic thrown
+  `Error`s from a failed `fetch` to this app's own `/api/trials/search` route.
+
+## What does NOT exist (do not invent these)
+
+- **No insights/gaps API** — cannot read Care-Insights-computed gaps.
+- **No problem-list write, no medication/prescription write.**
+- **No CRM / coordinator / task / worklist API** — do that in your own backend.
+- **No Task/Flag entity for "trials of interest" or similar provider-facing markers.**
+- **No `sdk.ehr.api.referral` namespace** (only patient/encounter/order/provider are declared).
+- **No pricing, benefits, claims-adjudication, or billing-document-generation concept.**
+
+## ClinicalTrials.gov API v2 — NOT part of the Vim SDK, used by this app's backend only
+
+Empirically verified live (not a Vim doc): `GET https://clinicaltrials.gov/api/v2/studies`
+— public, unauthenticated, no API key. Params used: `query.cond=<term>`,
+`filter.overallStatus=RECRUITING`, `filter.geo=distance(<lat>,<lon>,<radius>mi)`,
+`pageSize=<n>`. Response: `{ studies: [{ protocolSection: { identificationModule:
+{nctId, briefTitle}, statusModule: {overallStatus}, contactsLocationsModule: { locations:
+[{facility, city, state, geoPoint: {lat, lon}}] } } }] }`. Only
+`src/app/api/trials/search/route.ts` calls this — see `CLAUDE.md` golden rule 7.
+
+## Framework notes (Next.js App Router)
+
+- `useSearchParams()` requires a `<Suspense>` wrapper.
+- Guard init/redirect effects with a `useRef` so React StrictMode doesn't double-fire.
+- Port is not fixed by Vim — it must match your registered App URL and redirect URI. Keep
+  the running port, registered URLs, and redirect URI consistent.
