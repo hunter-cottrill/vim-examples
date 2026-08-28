@@ -17,6 +17,7 @@ export type AppInput =
   | { type: 'SDK_READY' }
   | { type: 'SDK_INIT_FAILED'; message: string }
   | { type: 'CHART_OPENED'; patientId: string }
+  | { type: 'CHART_CLOSED' }
   | { type: 'PATIENT_DATA_FETCHED'; patientId: string; evaluation: SdohEvaluation }
   | { type: 'PATIENT_DATA_FETCH_FAILED'; patientId: string; message: string };
 
@@ -35,6 +36,11 @@ export function transition(state: AppState, input: AppInput): AppState {
       // chart always (re)starts the fetch, regardless of where we were.
       if (state.status === 'connecting') return state;
       return { status: 'loading_patient_data', patientId: input.patientId };
+    
+    case 'CHART_CLOSED':
+      // Nothing to tear down before the SDK is up.
+      if (state.status === 'connecting') return state;
+      return { status: 'awaiting_chart' };
 
     case 'PATIENT_DATA_FETCHED':
       if (state.status !== 'loading_patient_data') return state;
