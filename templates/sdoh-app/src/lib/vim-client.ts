@@ -40,6 +40,19 @@ export function onChartOpen(cb: (patient: Patient, patientId: string) => void): 
   });
 }
 
+/**
+ * Subscribe to the patient leaving context. Workflow events fire on entry only —
+ * there is no chart_close — so the teardown signal comes from the context key
+ * going empty. Don't try to identify which patient left: the closing payload is
+ * partial and may carry no identifiers. The transition to empty is the signal.
+ */
+export function onChartClosed(cb: () => void): () => void {
+  const sdk = requireSdk();
+  return sdk.ehr.context.onChange('chart_open:patient', (_prev, curr) => {
+    if (!curr) cb();
+  });
+}
+
 async function unwrap<T>(call: Promise<{ success: boolean; data: T }>): Promise<T> {
   const response = await call;
   if (!response.success) throw new Error('Entity API call returned success: false');

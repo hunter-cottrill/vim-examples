@@ -4,7 +4,7 @@ import { Suspense, useEffect, useReducer, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { INITIAL_APP_STATE, transition } from '@/lib/app-state';
 import { evaluateSdoh } from '@/lib/sdoh/rules';
-import { fetchPatientContext, initSdk, onChartOpen, writeZCodes } from '@/lib/vim-client';
+import { fetchPatientContext, initSdk, onChartOpen, onChartClosed, writeZCodes } from '@/lib/vim-client';
 import { SdohPanel } from '@/components/SdohPanel';
 import { ConnectingView, ErrorView, WaitingView } from '@/components/StateViews';
 
@@ -54,6 +54,7 @@ function AppContent() {
               });
             });
         });
+        onChartClosed(() => dispatch({ type: 'CHART_CLOSED' }));
       } catch (err) {
         dispatch({ type: 'SDK_INIT_FAILED', message: err instanceof Error ? err.message : String(err) });
       }

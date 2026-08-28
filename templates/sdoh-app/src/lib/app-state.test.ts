@@ -52,6 +52,44 @@ describe('transition', () => {
     expect(state).toEqual({ status: 'loading_patient_data', patientId: 'p1' });
   });
 
+    it('CHART_CLOSED from ready clears back to awaiting_chart', () => {
+    const ready = { status: 'ready' as const, patientId: 'p1', evaluation: EMPTY_EVAL };
+    const state = transition(ready, { type: 'CHART_CLOSED' });
+    expect(state).toEqual({ status: 'awaiting_chart' });
+  });
+
+  it('CHART_CLOSED while still loading abandons the in-flight fetch', () => {
+    const loading = transition({ status: 'awaiting_chart' }, { type: 'CHART_OPENED', patientId: 'p1' });
+    const state = transition(loading, { type: 'CHART_CLOSED' });
+    expect(state).toEqual({ status: 'awaiting_chart' });
+  });
+
+  it('CHART_CLOSED from an error state clears it rather than stranding the message', () => {
+    const error = { status: 'error' as const, message: 'timed out', retryable: true, patientId: 'p1' };
+    const state = transition(error, { type: 'CHART_CLOSED' });
+    expect(state).toEqual({ status: 'awaiting_chart' });
+  });
+
+  it('CHART_CLOSED is a no-op while still connecting', () => {
+    const state = transition(INITIAL_APP_STATE, { type: 'CHART_CLOSED' });
+    expect(state).toEqual(INITIAL_APP_STATE);
+  });
+
+  it('CHART_CLOSED from awaiting_chart is idempotent', () => {
+    const awaiting = { status: 'awaiting_chart' as const };
+    const state = transition(awaiting, { type: 'CHART_CLOSED' });
+    expect(state).toEqual(awaiting);
+  });
+
+  it('a stale patient cannot reappear after the chart closes', () => {
+    let state: ReturnType<typeof transition> = { status: 'awaiting_chart' };
+    state = transition(state, { type: 'CHART_OPENED', patientId: 'p1' });
+    state = transition(state, { type: 'CHART_CLOSED' });
+    // The fetch for p1 was already in flight when the provider navigated away.
+    state = transition(state, { type: 'PATIENT_DATA_FETCHED', patientId: 'p1', evaluation: EMPTY_EVAL });
+    expect(state).toEqual({ status: 'awaiting_chart' });
+  });
+
   it('CHART_OPENED is a no-op while still connecting', () => {
     const state = transition(INITIAL_APP_STATE, { type: 'CHART_OPENED', patientId: 'p1' });
     expect(state).toEqual(INITIAL_APP_STATE);
