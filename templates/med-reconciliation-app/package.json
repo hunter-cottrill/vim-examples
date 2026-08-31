@@ -1,0 +1,31 @@
+{
+  "name": "vim-med-reconciliation-app",
+  "version": "0.1.0",
+  "description": "Medication reconciliation app on the Vim Connect SDK — on chart open, shows where the chart's medication list and problem list disagree so the provider can reconcile them",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "next dev -p 8080",
+    "build": "next build",
+    "start": "next start -p 8080",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@vimconnect/app-sdk": "0.4.56",
+    "next": "^16.2.12",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.5.3",
+    "vitest": "^4.1.1"
+  }
+}
