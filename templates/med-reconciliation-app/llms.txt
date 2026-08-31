@@ -1,0 +1,119 @@
+# @vimconnect/app-sdk — the verified surface this app uses
+
+> For AI coding agents (Claude Code, Cursor, etc.) working on this app. The SDK is niche; agents routinely hallucinate methods that don't exist. This file is the verified surface. When in doubt, read the installed types at `node_modules/@vimconnect/app-sdk/dist/index.d.ts` — that is ground truth, above any docs page and above this file.
+
+Verified against **v0.4.56**. Peer-depends on Zod v4 (not v3) — pin `zod@^4`.
+
+## What the SDK is
+
+A bridge between an app running in an iframe inside the Vim Hub and whichever EHR the provider is using. Reads come from three places: **workflow events** (one-shot, fire on entry, carry entity references), **context** (continuous, data under `curr.fields`), and the **Entity API** (on-demand, typed).
+
+## Entry points used by this app
+
+- `initVimSDK(options?: SDKInitOptions): Promise<VimSDK>` — the UI surface (`src/lib/vim-client.ts`).
+- `initWorkerVimSDK(options?: SDKInitOptions): Promise<WorkerSDK>` — the headless Worker surface (`src/lib/worker-client.ts`).
+- `getVimSDK(): VimSDK | null` — the already-initialised UI handle.
+
+These return **different objects with different surfaces**. The Worker is not the UI SDK running headless. See "Worker specifics" below.
+
+## Auth (OAuth launch flow) — required shape
+
+```
+/launch?launch_id=…
+  → mint CSRF, store under `oauth_state_${launchId}`
+  → GET {vimBackend}/app-auth/authorize
+       response_type=code, client_id, launch={launchId},
+       scope="launch openid", redirect_uri={appUrl}/app, state="{launchId}:{csrf}"
+  → back at /app?code=…&state=…  → validate state → POST /token (JSON, server-side)
+  → initVimSDK({ accessToken }) → sdk.hub.setActivationStatus('ENABLED')
+```
+
+`CLIENT_SECRET` lives behind `/token` and `/api/auth/token` only. Never a `NEXT_PUBLIC_*` var.
+
+This app runs the identical sequence for `/offscreen`, from the same `src/lib/launch-auth.ts`, differing only in `redirect_uri`. The token route also forwards `id_token`, which the siblings drop — Worker Apps have no `token_endpoint` URL to harvest from and must be handed it explicitly.
+
+## Events and context keys
+
+```ts
+EventType = 'chart_open' | 'encounter_open' | 'referral_start' | 'referral_save' | 'order_select' | 'order_sign'
+EventEntityMap['chart_open'] = { patient: Patient }
+
+ContextKey = 'chart_open:patient' | 'encounter_open:encounter' | 'encounter_open:patient' | 'referral_start:referral'
+TypedContextData<T> = { …; fields: Partial<T> }
+```
+
+This app uses `chart_open` as its trigger, and **both** patient context keys for teardown.
+
+**Workflow events fire on entry only.** There is no `chart_close`. Teardown is detected from the context keys emptying — and you must watch BOTH patient keys, because opening an encounter from inside a chart empties `chart_open:patient` while `encounter_open:patient` populates. The patient has not left. Watching one key tears down in-flight work every time a provider opens an encounter. Test presence with `Boolean(current)` only; the closing payload is a `Partial<Patient>` and may carry no identifiers at all. See `src/lib/presence-tracker.ts`, which additionally waits out a short settle window because the two updates arrive in an unspecified order.
+
+## Reads (Entity API) — the two this app uses
+
+```ts
+sdk.ehr.api.patient.getMedications(): Promise<ApiResponse<Medication[]>>
+sdk.ehr.api.patient.getProblems():    Promise<ApiResponse<Diagnosis[]>>
+ApiResponse<T> = { success: boolean; data: T }
+```
+
+Call the **no-argument** overloads. The forms taking `{ patientId }` are `@deprecated` — the id resolves from the active context.
+
+These can reject in the same tick a workflow event fires ("not in the current EHR context"). That is a context-population race, not a real absence: retry with backoff (`[200, 500, 1000]`, see `src/lib/retry.ts`) and fall back to the entity the event carried inline.
+
+## Entity shapes — thinner than you expect
+
+```ts
+Medication { form?, ndcCode?, quantity?: { unit?, value? }, strength?, frequency?, onSetDate?, medicationName? }
+Diagnosis  { code?, status?, system?, onSetDate?, description? }
+Patient    { …, medications?: Medication[], problems?: Diagnosis[], identifiers?: { id?, mrn?, ehrPatientId? }, … }
+```
+
+**Every field is optional and a given EHR build populates only some of them.** Existence in the type is not evidence the field arrives at runtime.
+
+- `Medication` has **no `status`** — you cannot tell active from discontinued.
+- `Medication` has **no last-fill date, refill count, prescriber, or sig**. `onSetDate` is a start date, not a fill date.
+- `Diagnosis.system` is **frequently absent** in real sandbox problem lists, which return only `code` and `description`.
+
+Never gate logic on an optional field's value. Use it to refine a result when present; fall back to what is reliably there when it is not. See `codeMayBeIcd10()` in `src/lib/med-rec/crosswalk.ts`.
+
+## Worker specifics
+
+```ts
+worker.ehr.context.register<T>(key, decl: HookDeclaration, cb: (prev, curr, handle) => void): UnsubscribeFn
+```
+
+- **One registration per event id** — it takes a single key, not an array.
+- `handle.hub` is present **only** if `operations` includes `'notify'`. It is a `HubNamespace`: `isValid()`, `onInvalidated()`, `pushNotification`. It has **no `appState`**.
+- **Panel-open state lives on `worker.hub.appState.isAppOpen`** — the top-level `WorkerHubState`, not the handle.
+- `handle.api` is typed `ApiNamespace` — an index signature of `unknown` — not the UI's typed `ApiNamespaceMap`. Narrow it once at the boundary (`patientApiOf` in `src/lib/worker-client.ts`).
+- The handle is short-lived. Check `handle.hub?.isValid()` before use **and again after every await**. `InvalidationReason = 'ttl_expired' | 'context_invalidated' | 'superseded'`. Close a superseded handle rather than dropping it.
+- `pushNotification.show()` auto-closes the handle (`HookDeclaration.autoCloseAfterAction` defaults to true).
+- `HookDeclaration.fields` and `debounceMs` are **not trusted here**: cds-app documented empirically that a `fields`-gated registration never fired on the real event and instead fired later carrying stale state, and the SDK's own doc comment marks `debounceMs` "Phase 1 — implemented last". This app hand-rolls its debounce.
+- A notification's `launchPayload` is read back in the UI app via `sdk.consumeLaunchContext()` — consume-once, null thereafter.
+
+## Writeback — not used in this app
+
+The full ceremony is `getCapability('update')` → `requestPermission('update', { fields })` if requestable → `hasPermission('update')` → `update(NESTED object, { mode: 'append' | 'override' })`. Dot-notation keys throw; there is no `'merge'` mode.
+
+None of it applies here: there is no medication write and no problem-list write, and the EHR support matrix reports read support only. Findings are displayed for the provider to act on in the chart.
+
+## Error handling
+
+`SDKError` is declared in the types but **not exported by the compiled runtime bundle** — `instanceof SDKError` does not work. Duck-type on `err.code`.
+
+## What does NOT exist (do not invent these)
+
+- No dispense, fill, pharmacy, or claims read. **This is the big one for this app** — see "Wiring up fill history" in the README.
+- No `Medication.status`, no last-fill date, no refill count.
+- No medication write, no problem-list write, no allergy write.
+- No drug-interaction, dosing, or allergy-checking API.
+- No `chart_close` / `encounter_close` event.
+- No `sdk.ehr.api.referral` namespace (referrals are read via the `referral_start:referral` context key only).
+- No gaps/insights feed to publish findings to.
+- No CRM, coordinator, task, or worklist API.
+- No FHIR / CQL / Questionnaire support.
+
+## Framework notes (Next.js App Router)
+
+- `useSearchParams()` requires a `<Suspense>` wrapper.
+- Guard init/redirect effects with a `useRef` so React StrictMode doesn't double-fire.
+- The port is not fixed by Vim — it must match your registered App URL and redirect URI.
+- `vitest.config.mts` resolves the `@` alias with `fileURLToPath`, not `new URL(...).pathname`: `pathname` percent-encodes, so a project directory containing a space breaks every `@/…` import.
