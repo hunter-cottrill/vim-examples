@@ -1,0 +1,100 @@
+name: sdk-bump
+
+# Bumps @vimconnect/app-sdk to the latest release across every template,
+# verifies each one, and opens a single PR with the result.
+#
+# WHY A PR AND NOT A DIRECT COMMIT. The checks below prove build-time
+# compatibility only. Every template's Vitest suite is deliberately SDK-free
+# (pure domain logic, no SDK import, no .env), so a green test run says nothing
+# about whether the new SDK still behaves the same at runtime — only
+# `tsc --noEmit` and `npm run build` touch the SDK surface at all. A method
+# quietly disappearing from an EHR namespace, or an event payload changing
+# shape, would sail through every check here and only surface in a live EHR.
+# So this opens a PR for a human to look at; it never merges itself.
+
+on:
+  schedule:
+    - cron: "0 13 * * 1" # Mondays 13:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Resolve the latest SDK version
+        id: latest
+        run: |
+          LATEST=$(npm view @vimconnect/app-sdk version)
+          echo "version=$LATEST" >> "$GITHUB_OUTPUT"
+          echo "Latest published: $LATEST"
+
+      - name: Bump and verify every template
+        id: verify
+        run: |
+          LATEST="${{ steps.latest.outputs.version }}"
+          CHANGED=""
+          PASSED=""
+          FAILED=""
+
+          for dir in templates/*/; do
+            name=$(basename "$dir")
+            [ -f "$dir/package.json" ] || continue
+
+            current=$(node -p "require('./$dir/package.json').dependencies?.['@vimconnect/app-sdk'] ?? ''")
+            if [ -z "$current" ]; then continue; fi
+            if [ "$current" = "$LATEST" ]; then
+              echo "::notice::$name already on $LATEST"
+              continue
+            fi
+
+            echo "::group::$name  $current -> $LATEST"
+            ( cd "$dir" \
+              && npm install "@vimconnect/app-sdk@$LATEST" --save-exact --no-audit --no-fund )
+
+            ok=true
+            ( cd "$dir" && npx tsc --noEmit ) || ok=false
+            ( cd "$dir" && npm test ) || ok=false
+            ( cd "$dir" && npm run build ) || ok=false
+            echo "::endgroup::"
+
+            CHANGED="$CHANGED $name"
+            if [ "$ok" = true ]; then PASSED="$PASSED- \`$name\` — type-check, tests, build all pass%0A"
+            else FAILED="$FAILED- \`$name\` — **FAILED**, see the job log%0A"; fi
+          done
+
+          echo "changed=$CHANGED" >> "$GITHUB_OUTPUT"
+          echo "passed=$PASSED" >> "$GITHUB_OUTPUT"
+          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
+
+      - name: Drop build artifacts before committing
+        run: |
+          find templates -maxdepth 2 -name ".next" -type d -exec rm -rf {} + 2>/dev/null || true
+          find templates -maxdepth 2 -name "*.tsbuildinfo" -delete 2>/dev/null || true
+
+      - name: Open a PR
+        if: steps.verify.outputs.changed != ''
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: sdk-bump/${{ steps.latest.outputs.version }}
+          delete-branch: true
+          commit-message: "Bump @vimconnect/app-sdk to ${{ steps.latest.outputs.version }}"
+          title: "Bump @vimconnect/app-sdk to ${{ steps.latest.outputs.version }}"
+          body: |
+            Automated bump of `@vimconnect/app-sdk` to **${{ steps.latest.outputs.version }}** across every template, with `package-lock.json` updated to match.
+
+            **Verified (build-time only)**
+            ${{ steps.verify.outputs.passed }}
+            ${{ steps.verify.outputs.failed }}
+
+            **What these checks do and don't prove.** `tsc --noEmit` and `npm run build` are the only steps that touch the SDK surface — the Vitest suites are SDK-free by design, so a green test run is not evidence of SDK compatibility. A method disappearing from an EHR namespace, or an event payload changing shape, would pass everything here and only appear in a live EHR.
+
+            **Before merging**, skim the SDK's changelog for behavioural changes, and if anything looks load-bearing, launch one template in the sandbox Hub and confirm the trigger still fires and the reads still return.

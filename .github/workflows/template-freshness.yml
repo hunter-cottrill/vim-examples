@@ -1,9 +1,21 @@
 name: template-freshness
 
-# The SDK is pre-1.0 and moving. A stale starter template is worse than none.
-# This reinstalls every template against the latest compatible SDK, type-checks,
-# builds, and runs the Vitest suites — on every push and weekly — so the
-# "tested against vX.Y" claim on the docs stays true.
+# Two jobs, two different questions.
+#
+#   verify — does each template still build exactly as pinned? This must stay
+#   green. A failure here means something drifted that shouldn't have
+#   (a transitive dep, a Node change, a bad merge).
+#
+#   sdk-canary — does each template still build against the NEWEST SDK? This is
+#   allowed to fail. A failure is the signal to look at what changed and decide
+#   whether to bump the pin. The SDK is pre-1.0 and has shipped breaking changes
+#   inside a patch bump (0.4.49 -> 0.4.50 moved the zod peer dep from v3 to v4),
+#   so "our pin still works" and "the latest release still works" are genuinely
+#   different facts and both are worth knowing.
+#
+# Templates pin @vimconnect/app-sdk exactly. That is deliberate: a prospect who
+# clones one gets a version we have actually tested. The canary is how we learn
+# it is time to move that pin.
 
 on:
   push:
@@ -11,14 +23,63 @@ on:
   pull_request:
   schedule:
     - cron: "0 13 * * 1" # Mondays 13:00 UTC
+  workflow_dispatch:      # run on demand, e.g. right after an SDK release
 
 jobs:
   verify:
+    name: verify (pinned SDK)
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        template: [cds-app, sdoh-app]
+        template:
+          - cds-app
+          - sdoh-app
+          - referral-leakage-app
+          - price-transparency-app
+          - prior-auth-app
+          - care-coordination-app
+          - clinical-trials-app
+          - med-reconciliation-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install (as pinned)
+        working-directory: templates/${{ matrix.template }}
+        run: npm ci || npm install
+      - name: Report resolved SDK version
+        working-directory: templates/${{ matrix.template }}
+        run: npm ls @vimconnect/app-sdk || true
+      - name: Type-check
+        working-directory: templates/${{ matrix.template }}
+        run: npm run type-check
+      - name: Test
+        working-directory: templates/${{ matrix.template }}
+        run: npm test
+      - name: Build
+        working-directory: templates/${{ matrix.template }}
+        run: npm run build
+
+  sdk-canary:
+    name: canary (latest SDK)
+    runs-on: ubuntu-latest
+    # Informational: a red canary means the newest SDK breaks this template,
+    # not that the template is broken today. Never block a merge on it.
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        template:
+          - cds-app
+          - sdoh-app
+          - referral-leakage-app
+          - price-transparency-app
+          - prior-auth-app
+          - care-coordination-app
+          - clinical-trials-app
+          - med-reconciliation-app
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,13 +88,20 @@ jobs:
       - name: Install
         working-directory: templates/${{ matrix.template }}
         run: npm install
-      - name: Report resolved SDK version
+      - name: Upgrade to the latest SDK
         working-directory: templates/${{ matrix.template }}
-        run: npm ls @vimconnect/app-sdk || true
+        run: npm install @vimconnect/app-sdk@latest
+      - name: Report pinned vs. resolved
+        working-directory: templates/${{ matrix.template }}
+        run: |
+          echo "pinned in package.json:"
+          node -p "require('./package.json').dependencies['@vimconnect/app-sdk']"
+          echo "resolved after upgrade:"
+          npm ls @vimconnect/app-sdk || true
       - name: Type-check
         working-directory: templates/${{ matrix.template }}
         run: npm run type-check
-      - name: Test (Vitest)
+      - name: Test
         working-directory: templates/${{ matrix.template }}
         run: npm test
       - name: Build
