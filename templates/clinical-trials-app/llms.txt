@@ -65,7 +65,7 @@ No writeback is built here. The ceremony exists (`getCapability('update')` →
 `requestPermission('update', {fields})` → `hasPermission('update')` →
 `update(nestedObject, {mode})`), but no entity offers a confirmed writable target for
 "trials of interest" — see `CLAUDE.md` golden rule 2. `update()`'s `mode` is
-`'override' | 'append'` only — no `'merge'`.
+modes differ by surface — the UI's `ContextWriteback<T>` accepts `'override' | 'merge' | 'append'`, the Worker's `ContextWritebackNamespace` accepts only `'override' | 'append'`.
 
 ## Error handling
 

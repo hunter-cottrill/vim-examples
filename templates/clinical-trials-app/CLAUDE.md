@@ -28,10 +28,11 @@ ClinicalTrials.gov API, and shows the provider a distance-sorted, read-only list
    There is no LLM in this app — every mapping is a deterministic table lookup.
 5. **`SDKError` is declared in the types but not exported by the compiled runtime
    bundle** — don't use `instanceof SDKError`; duck-type on `(err as any)?.code` instead.
-   `update()`'s `mode` is `'override' | 'append'` only — there is no `'merge'`. (This
-   contradicts the generic hosted docs site, which shows both differently; this repo's own
-   verified-against-installed-types convention, carried over from `sdoh-app`, is the one
-   to trust.)
+   `update()`'s modes differ by surface: the UI's `sdk.ehr.context.<entity>` is typed
+   `ContextWriteback<T>` and accepts `'override' | 'merge' | 'append'`; the Worker's
+   pre-authorized handle is `ContextWritebackNamespace` and accepts only
+   `'override' | 'append'`. Confirm against the installed types for the surface
+   you're on — the two interfaces are easy to conflate.
 6. **The ZIP3-centroid table (`src/lib/trial-match/zip3-centroids.ts`) is a real, publicly
    sourced dataset (U.S. Census Bureau ZCTA Gazetteer)**, but it's still an area-level
    approximation — never present a ZIP3 centroid as an individual patient's confirmed

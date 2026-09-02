@@ -76,7 +76,7 @@ if (cap.disruptive && cap.permissionState === 'requestable')
 if (sdk.ehr.context.encounter.hasPermission('update'))
   await sdk.ehr.context.encounter.update(
     { assessment: { diagnoses: [{ code: 'I10', description: '...' }] } }, // NESTED object
-    { mode: 'append' } // 'override' | 'append' only — NO 'merge'
+    { mode: 'append' } // UI: 'override' | 'merge' | 'append'; Worker handle: 'override' | 'append'
   );
 ```
 
