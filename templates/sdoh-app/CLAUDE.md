@@ -21,8 +21,12 @@ Z-codes to the encounter through a permission-gated writeback.
    → `update(...)` only if `hasPermission('update')`. Refusal is a clean no-op, never a
    thrown error the provider sees as a crash.
 3. **`update()` takes a nested object** (`{ assessment: { diagnoses: [...] } }`);
-   dot-notation keys throw `INVALID_DATA`. `mode` is `'override' | 'append'` (no `'merge'`
-   — this app only ever uses `'append'`).
+   dot-notation keys throw `INVALID_DATA`. Modes differ by surface: the UI's
+   `sdk.ehr.context.<entity>` is typed `ContextWriteback<T>` and accepts
+   `'override' | 'merge' | 'append'`; the Worker's pre-authorized handle is
+   `ContextWritebackNamespace` and accepts only `'override' | 'append'`. Confirm
+   against the installed types for the surface you're on. This app only ever
+   uses `'append'`.
 4. **Secrets are server-only.** `CLIENT_SECRET` lives behind `/token` and
    `/api/auth/token`, never in the client bundle or a `NEXT_PUBLIC_*` var. `.env.local` is
    gitignored — never commit it; only `.env.local.example` (placeholders) ships.

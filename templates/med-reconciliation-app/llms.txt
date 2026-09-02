@@ -91,7 +91,7 @@ worker.ehr.context.register<T>(key, decl: HookDeclaration, cb: (prev, curr, hand
 
 ## Writeback — not used in this app
 
-The full ceremony is `getCapability('update')` → `requestPermission('update', { fields })` if requestable → `hasPermission('update')` → `update(NESTED object, { mode: 'append' | 'override' })`. Dot-notation keys throw; there is no `'merge'` mode.
+The full ceremony is `getCapability('update')` → `requestPermission('update', { fields })` if requestable → `hasPermission('update')` → `update(NESTED object, { mode })`. Dot-notation keys throw `INVALID_DATA`. Modes differ by surface: the UI's `sdk.ehr.context.<entity>` is typed `ContextWriteback<T>` and accepts `'override' | 'merge' | 'append'`; the Worker's pre-authorized handle is `ContextWritebackNamespace` and accepts only `'override' | 'append'`.
 
 None of it applies here: there is no medication write and no problem-list write, and the EHR support matrix reports read support only. Findings are displayed for the provider to act on in the chart.
 

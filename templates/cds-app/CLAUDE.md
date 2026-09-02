@@ -20,7 +20,11 @@ EHR), reads clinical context, and writes back to the chart through a permission 
    `getCapability('update')` → `requestPermission('update', { fields })` if `requestable`
    → `update(...)` only if `hasPermission('update')`. Refusal is a clean no-op.
 3. **`update()` takes a nested object** (`{ assessment: { diagnoses: [...] } }`);
-   dot-notation keys throw `INVALID_DATA`. `mode` is `'override' | 'append'` (no `'merge'`).
+   dot-notation keys throw `INVALID_DATA`. Modes differ by surface: the UI's
+   `sdk.ehr.context.<entity>` is typed `ContextWriteback<T>` and accepts
+   `'override' | 'merge' | 'append'`; the Worker's pre-authorized handle is
+   `ContextWritebackNamespace` and accepts only `'override' | 'append'`. Confirm
+   against the installed types for the surface you're on. This app uses `'append'`.
 4. **Secrets are server-only.** `CLIENT_SECRET` and any LLM key live behind `/api/*` routes,
    never in the client bundle or a `NEXT_PUBLIC_*` var. `.env.local` is gitignored — never
    commit it; only `.env.example` (empty placeholders) ships.
