@@ -1,0 +1,109 @@
+# Vim App SDK — LLM Context (llms.txt)
+
+> For AI coding agents (Claude Code, Cursor, etc.) building on
+> `@vimconnect/app-sdk`. The SDK is niche; agents routinely hallucinate
+> methods that don't exist. This file is the verified surface for THIS app.
+> When in doubt, read the installed types at
+> `node_modules/@vimconnect/app-sdk/dist/index.d.ts` — that is ground truth,
+> above any docs page.
+
+## What the SDK is
+
+An in-page client that loads from a CDN and bridges to the Vim Connect Chrome
+extension over a MessageChannel. This app runs as an iframe inside the Vim
+Hub, injected into a web EHR. One app runs unmodified across many EHRs
+because the extension normalizes each into one event/entity model.
+
+## Package facts
+
+- `@vimconnect/app-sdk`, ESM-only. Types at `dist/index.d.ts`.
+- Pinned at `0.4.56` in `package.json` — pre-1.0. Re-verify signatures on
+  upgrade. Peer-depends on `zod@^4` (not v3).
+
+## One entry point (this app has no Worker)
+
+- **UI app** — `initVimSDK({ accessToken })`. Visible sidebar. Subscribes:
+  `sdk.ehr.workflow.on(...)`, `sdk.ehr.context.onChange(...)`.
+- This app does not use `initWorkerVimSDK` — `chart_open` already puts the
+  provider in front of the open panel, so a Worker would add nothing.
+
+## Auth (OAuth launch flow) — required shape
+
+1. Extension opens the Launch endpoint as `/launch?launch_id=abc123`.
+2. Redirect to `{backend}/app-auth/authorize` with: `response_type=code`,
+   `client_id`, `launch=abc123`, `scope="launch openid"`,
+   `redirect_uri={origin}/app`, `state="abc123:<csrf>"`.
+3. Vim redirects to `/app?code=...&state=...`. Validate CSRF from state.
+4. The server route POSTs **JSON** (NOT form-urlencoded, NO redirect_uri) to
+   `{backend}/app-auth/token`: `{ grant_type:"authorization_code", code,
+   client_id, client_secret }`.
+5. `initVimSDK({ accessToken })` → `sdk.hub.setActivationStatus("ENABLED")`.
+- Backend host is `api.getvim.ai` (prod) / `api.stage.getvim.ai` (staging).
+- Auth codes are single-use; there is no refresh flow. Expiry → re-launch
+  from the Hub.
+- `CLIENT_SECRET` is server-only. Only `NEXT_PUBLIC_*` reaches the browser.
+
+## Reads used by this app
+
+- `sdk.ehr.workflow.on('chart_open', ...)` → bare id reference, one-shot.
+  Entity API reads below resolve their id from context, so nothing is ever
+  read off the event payload itself.
+- `sdk.ehr.context.onChange('chart_open:patient' | 'encounter_open:patient', ...)`
+  → `curr.fields`, watched ONLY for the dual-key teardown rule (reset only on
+  a genuine present-to-absent transition on both keys — see
+  `src/lib/presence-tracker.ts`).
+- `sdk.ehr.api.patient.getPatient()` → `ApiResponse<Patient>` (no-arg —
+  resolves from current context). `Patient.identifiers.mrn` /
+  `.ehrPatientId` are both optional; this app's hospitalization lookup keys
+  on whichever is present, and treats neither being present as its own
+  distinct outcome (`kind: 'unavailable'`), never as "not found."
+- `sdk.ehr.api.patient.getProblems()` → `ApiResponse<Diagnosis[]>` (no-arg).
+  `Diagnosis` fields (`code`, `status`, `system`, `onSetDate`, `description`)
+  are all optional — real sandbox problem lists have returned `code`/
+  `description` with no `system` at all.
+- `sdk.ehr.api.patient.getMedications()` → `ApiResponse<Medication[]>`
+  (no-arg). `Medication` fields (`form`, `ndcCode`, `quantity`, `strength`,
+  `frequency`, `onSetDate`, `medicationName`) are all optional — **there is
+  no `dosage` field and no `status` field**; nothing says whether a
+  medication is still active.
+- A method existing in the `.d.ts` does NOT guarantee it's implemented in a
+  given EHR build — every Entity API call here is wrapped in
+  retry-with-backoff (`src/lib/retry.ts`) and treats `NOT_IMPLEMENTED` as
+  `unsupported`, not `error`.
+
+## What does NOT exist (do not invent)
+
+- **No encounter-history API and no admission/discharge fields on
+  `Encounter`.** `EncounterSchema` has `id, plan, type, isSigned, provider,
+  diagnoses, objective, assessment, subjective, identifiers, dateOfService,
+  encounterNotes, basicInformation{type,status,selfPay,dateOfService},
+  billingInformation, patientInstructions` — no admission date, discharge
+  date, disposition, or facility field anywhere. The `encounter` Entity API
+  namespace only has `getProcedureCodes()`/`updateProcedureCodes()` — no
+  `getEncounters()`/list. This is why "recent hospital stay" comes from this
+  app's own bundled `src/lib/hospitalizationDataset.ts` instead, standing in
+  for a real ADT/HIE/claims feed.
+- **No order query/list API** — `order.getOrderById()` only, so this app
+  cannot check whether a follow-up visit is already scheduled.
+- **No `sdk.ehr.api.referral` namespace** (only `patient`/`encounter`/`order`
+  are declared).
+- **No problem-list write, no medication write, no order create/update.**
+  This app has no writeback at all — display only.
+- **`SDKError` is a declared type but is NOT exported at runtime** — verified
+  via `dist/index.mjs`'s export list. Duck-type on `err.code` against
+  `SDKErrorCode`, never `instanceof SDKError`.
+
+## Writeback
+
+None. No confirmed writable target exists for this app's findings (no
+problem-list write, no medication-list write, no order create/update
+anywhere in the reference) — it is read-only by design.
+
+## Framework notes (Next.js App Router)
+
+- `useSearchParams()` requires a `<Suspense>` wrapper.
+- Guard init/redirect effects with a `useRef` so React StrictMode doesn't
+  double-fire.
+- Port is not fixed by Vim — it must match your registered App URL and
+  redirect URI. Keep the running port, registered URLs, and redirect URI
+  consistent.
