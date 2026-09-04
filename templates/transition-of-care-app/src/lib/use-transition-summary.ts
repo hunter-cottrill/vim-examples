@@ -22,6 +22,7 @@ export function useTransitionSummary(connect: () => Promise<void>): PageStatus {
   const [summary, setSummary] = useState<TransitionSummary | null>(null);
   const initRef = useRef(false);
   const generationRef = useRef(0);
+  const [chartNonce, setChartNonce] = useState(0);
 
   useEffect(() => {
     if (initRef.current) return;
@@ -38,15 +39,16 @@ export function useTransitionSummary(connect: () => Promise<void>): PageStatus {
         unsubscribers = [
                     // chart_open is the fast path when the panel is already open. It is
           // one-shot, so it is an accelerator, not the source of truth.
-          onChartOpen(() => { 
-            console.log('[toc] chart_open EVENT');
-            setPatientPresent(true); }
-          ),
-          // The context keys report current state, so this covers the case the
-          // event cannot: the panel mounting after the chart was already open.
+          onChartOpen(() => {
+            setPatientPresent(true);
+            setChartNonce((n) => n + 1);
+          }),
           onPatientPresenceChange(
-            () => { console.log('[toc] presence -> TRUE'); setPatientPresent(true); },
-            () => { console.log('[toc] presence -> FALSE'); setPatientPresent(false); },
+            () => {
+              setPatientPresent(true);
+              setChartNonce((n) => n + 1);
+            },
+            () => setPatientPresent(false),
           ),
         ];
       } catch (err) {
@@ -56,10 +58,10 @@ export function useTransitionSummary(connect: () => Promise<void>): PageStatus {
 
     return () => unsubscribers.forEach((unsub) => unsub());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [ready, patientPresent, chartNonce]);
 
   useEffect(() => {
-    console.log('[toc] effect', { ready, patientPresent });
+    console.log('[toc] effect', { ready, patientPresent, chartNonce });
     if (!ready) return;
     if (patientPresent) {
       void runFetchCycle();
@@ -69,7 +71,7 @@ export function useTransitionSummary(connect: () => Promise<void>): PageStatus {
       setError(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, patientPresent]);
+  }, [ready, patientPresent, chartNonce]);
 
   async function runFetchCycle() {
     const generation = ++generationRef.current;
