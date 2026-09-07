@@ -4,7 +4,9 @@
   "description": "Clinical Decision Support starter app on the Vim Connect SDK — LLM-ranked, vocabulary-bound code suggestions with gated writeback",
   "license": "MIT",
   "private": true,
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "next dev -p 8080",
     "build": "next build",
@@ -14,7 +16,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
-    "@vimconnect/app-sdk": "0.4.53",
+    "@vimconnect/app-sdk": "0.4.57",
     "next": "^16.2.12",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",

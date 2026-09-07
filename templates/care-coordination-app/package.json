@@ -4,7 +4,9 @@
   "description": "Care coordination starter app on the Vim Connect SDK — an honest current-session snapshot of recent activity, orders on record, and providers referenced, so nothing gets repeated",
   "license": "MIT",
   "private": true,
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "next dev -p 8080",
     "build": "next build",
@@ -13,7 +15,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@vimconnect/app-sdk": "0.4.53",
+    "@vimconnect/app-sdk": "0.4.57",
     "next": "^16.2.12",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
