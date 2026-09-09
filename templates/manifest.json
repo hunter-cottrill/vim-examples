@@ -1,0 +1,88 @@
+{
+  "$comment": "Source of truth for the template set. Consumed by the README table, the Vim Connect web pages (vim-connect-templates.js), and the vim-app-builder Claude Code plugin. Add a template here in the same commit that adds its directory — CI fails if the two drift.",
+  "version": 1,
+  "repo": "hunter-cottrill/vim-examples",
+  "templates": [
+    {
+      "slug": "cds-app",
+      "name": "Clinical decision support",
+      "trigger": "chart_open",
+      "triggerLabel": "When a chart opens",
+      "summary": "The right guidance surfaces while the note is open.",
+      "demonstrates": ["worker", "llm-ranking", "writeback", "controlled-vocabulary"],
+      "writeback": "encounter diagnoses, permission-gated"
+    },
+    {
+      "slug": "sdoh-app",
+      "name": "Social determinants of health",
+      "trigger": "chart_open",
+      "triggerLabel": "When a chart opens",
+      "summary": "Social barriers and the Z-codes to capture them.",
+      "demonstrates": ["worker", "notification", "deterministic-rules", "writeback", "simulator", "zip-crosswalk"],
+      "writeback": "encounter diagnoses, permission-gated"
+    },
+    {
+      "slug": "care-coordination-app",
+      "name": "Care coordination",
+      "trigger": "chart_open",
+      "triggerLabel": "When a chart opens",
+      "summary": "What's already been done this session, so nothing gets repeated.",
+      "demonstrates": ["ui-only", "honest-scoping"],
+      "writeback": "none"
+    },
+    {
+      "slug": "med-reconciliation-app",
+      "name": "Medication reconciliation",
+      "trigger": "chart_open",
+      "triggerLabel": "When a chart opens",
+      "summary": "Where the medication list and the problem list disagree.",
+      "demonstrates": ["worker", "notification", "crosswalk", "coverage-accounting", "simulator", "presence-tracker"],
+      "writeback": "none — no confirmed target"
+    },
+    {
+      "slug": "transition-of-care-app",
+      "name": "Transition of care",
+      "trigger": "chart_open",
+      "triggerLabel": "When a chart opens",
+      "summary": "A recent hospital stay, and what's still unreconciled.",
+      "demonstrates": ["ui-only", "backend-boundary", "crosswalk", "simulator", "presence-tracker"],
+      "writeback": "none — no confirmed target"
+    },
+    {
+      "slug": "clinical-trials-app",
+      "name": "Clinical trial matching",
+      "trigger": "chart_open",
+      "triggerLabel": "When a chart opens",
+      "summary": "Trials the patient may qualify for, nearest first.",
+      "demonstrates": ["ui-only", "external-api", "crosswalk", "geo-distance", "simulator"],
+      "writeback": "none"
+    },
+    {
+      "slug": "referral-leakage-app",
+      "name": "Referral guidance",
+      "trigger": "referral_start",
+      "triggerLabel": "When a referral starts",
+      "summary": "Better specialist choices at the moment of referral.",
+      "demonstrates": ["worker", "llm-rationale", "writeback", "simulator", "controlled-directory"],
+      "writeback": "referral notes only"
+    },
+    {
+      "slug": "price-transparency-app",
+      "name": "Price transparency",
+      "trigger": "order_select | order_sign",
+      "triggerLabel": "When an order is placed",
+      "summary": "Cost and coverage before the order goes out.",
+      "demonstrates": ["worker", "crosswalk", "deterministic-pricing", "payer-mapping"],
+      "writeback": "none — display only"
+    },
+    {
+      "slug": "prior-auth-app",
+      "name": "Prior authorization",
+      "trigger": "order_select | order_sign",
+      "triggerLabel": "When an order is placed",
+      "summary": "Whether auth is needed, a pre-filled submission, and the decision.",
+      "demonstrates": ["worker", "notification", "state-machine", "polling", "backend-routes", "backend-store", "simulator"],
+      "writeback": "none — no confirmed target"
+    }
+  ]
+}

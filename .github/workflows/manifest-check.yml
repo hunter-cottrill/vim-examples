@@ -1,0 +1,60 @@
+name: manifest-check
+
+# The manifest is the source of truth for three consumers (README table, the
+# Vim Connect web pages, the vim-app-builder plugin). If it drifts from the
+# templates/ directory, the plugin sends an agent to a slug that doesn't exist.
+# This makes drift a failed build rather than a mystery.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Manifest and templates/ agree
+        run: |
+          node -e '
+            const fs = require("fs");
+            const m = JSON.parse(fs.readFileSync("templates/manifest.json", "utf8"));
+
+            const onDisk = fs.readdirSync("templates", { withFileTypes: true })
+              .filter(d => d.isDirectory())
+              .map(d => d.name)
+              .sort();
+            const inManifest = m.templates.map(t => t.slug).sort();
+
+            const missing = onDisk.filter(s => !inManifest.includes(s));
+            const extra   = inManifest.filter(s => !onDisk.includes(s));
+            const errors  = [];
+
+            if (missing.length) errors.push("in templates/ but not in manifest.json: " + missing.join(", "));
+            if (extra.length)   errors.push("in manifest.json but no directory: " + extra.join(", "));
+
+            const required = ["slug","name","trigger","triggerLabel","summary","demonstrates","writeback"];
+            for (const t of m.templates) {
+              for (const field of required) {
+                if (t[field] === undefined) errors.push(`${t.slug || "(no slug)"} is missing "${field}"`);
+              }
+              if (Array.isArray(t.demonstrates) && t.demonstrates.length === 0) {
+                errors.push(`${t.slug} has an empty "demonstrates" array — it is the main signal an agent uses to pick a starting template`);
+              }
+              if (t.slug && !fs.existsSync(`templates/${t.slug}/package.json`)) {
+                errors.push(`${t.slug} has no package.json at templates/${t.slug}/`);
+              }
+            }
+
+            if (errors.length) {
+              console.error("manifest.json is out of sync:\n  - " + errors.join("\n  - "));
+              process.exit(1);
+            }
+            console.log(`manifest.json matches templates/ (${inManifest.length} templates)`);
+          '
