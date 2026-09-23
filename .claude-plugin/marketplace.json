@@ -1,0 +1,7 @@
+{
+  "name": "vim-examples",
+  "owner": { "name": "Hunter Cottrill" },
+  "plugins": [
+    { "name": "vim-app-builder", "source": "./plugins/vim-app-builder" }
+  ]
+}

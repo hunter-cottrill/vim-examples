@@ -1,0 +1,8 @@
+{
+  "name": "vim-app-builder",
+  "version": "0.2.0",
+  "description": "Build a Vim Connect app from a short description, or add the Vim SDK to an app you already have. Researches the SDK, asks a few scoping questions, plans, and builds.",
+  "author": { "name": "Hunter Cottrill" },
+  "license": "MIT",
+  "keywords": ["vim", "vim-connect", "ehr", "healthcare", "sdk", "scaffold", "integration", "migration"]
+}
