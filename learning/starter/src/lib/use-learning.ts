@@ -13,6 +13,7 @@ import {
   fetchProblems,
   onPatientPresence,
   onWorkflowEvent,
+  SIM_MODE,
 } from './vim-client';
 
 export interface LearningState {
@@ -74,8 +75,12 @@ export function useLearning(connect: () => Promise<void>): LearningState {
         try {
           await connect();
         } catch (err) {
-          if (isNotBuilt(err)) markUnbuilt(err.module);
-          throw err;
+          if (!isNotBuilt(err)) throw err;
+          markUnbuilt(err.module);
+          // Without a session nothing works against a real EHR, but the
+          // simulator doesn't need one — so carry on and let the other
+          // modules run.
+          if (!SIM_MODE) throw err;
         }
         setConnection('connected');
         const summary = attempt(markUnbuilt, describeSession); // MODULE 2

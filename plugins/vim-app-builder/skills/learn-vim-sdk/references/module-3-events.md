@@ -45,8 +45,8 @@ Point out that the callback only reports `event.type`. An event carries a refere
 
 This is one of the two most important exercises in the course.
 
-1. Pick a patient, then click **"Event only: chart_open"** under *Raw signals*.
-2. The event appears in Module 3's log. Now look at Module 4: still *not built*, so nothing knows a patient is here.
+1. Pick a patient, then click **"Event only: chart_open"** under *Raw signals*. The feedback line says the event was **delivered**, and it appears in Module 3's log.
+2. Now click **"Open chart"**. Read the feedback line carefully: the event is *delivered*, but `chart_open:patient` says **nothing listening yet**. That's why Module 4 still can't tell a patient is here — the signal that says so has no one to receive it.
 
 Now the real question. Ask: *if your app had only this event to go on, and the provider had opened the chart before opening your app, what would your app show?* Nothing, forever. The event fired once, before the app was listening, and it doesn't fire again.
 

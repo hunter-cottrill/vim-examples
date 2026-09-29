@@ -13,8 +13,10 @@ it('Module 4 — an event alone does not mean a patient is present', async ({ sk
   await unlessNotBuilt(skip, () => {
     const onPresent = vi.fn();
     client.onPatientPresence(onPresent, vi.fn());
-    client.simulateEvent('chart_open');
+    expect(client.simulateEvent('chart_open')).toBe(0); // nothing subscribes to events here
     expect(onPresent).not.toHaveBeenCalled();
+    expect(client.simulateContext('chart', 0)).toBe(1); // but context reaches the tracker
+    expect(onPresent).toHaveBeenCalledTimes(1);
   });
 });
 

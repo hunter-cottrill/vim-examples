@@ -28,11 +28,13 @@ export async function connectToVim(accessToken: string): Promise<void> {
 }
 ```
 
-Explain `setActivationStatus('ENABLED')`: until the app calls it, the Vim Connect panel treats the app as still loading.
+Explain two things. The first line, `if (SIM_MODE) return;`, is the simulator seam: in the simulator there's no session, so the function returns before touching the SDK — every function in this file has one. And `setActivationStatus('ENABLED')`: until the app calls it, the Vim Connect panel treats the app as still loading.
 
 ## Check
 
-Module 1 has no simulator check — in the simulator, `connectToVim` returns before doing anything. It gets verified for real in Module 7, when it runs against the sandbox. Say this plainly: some things only a live environment can prove.
+`npm test` — the Module 1 check should pass. It confirms the function returns cleanly in the simulator, and the panel's Module 1 card changes from "Not built yet" to "Built".
+
+That is all the simulator can prove. The session itself — the SDK call and the activation status — only runs when you go live in Module 7. Say this plainly: some things only a live environment can prove.
 
 ## Break
 

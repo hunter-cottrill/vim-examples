@@ -15,7 +15,7 @@ npm install
 NEXT_PUBLIC_SIM_MODE=true npm run dev
 ```
 
-Open http://localhost:8080/dev/harness. You'll see a yellow **Simulator on** banner, simulator controls on the left, and six module cards on the right reading **Not built yet**.
+Open http://localhost:8080/dev/harness. You'll see a yellow **Simulator on** banner, simulator controls on the left, and six module cards on the right. Modules 1–4 read **Not built yet**; Modules 5 and 6 say they need Module 4 first, since nothing is fetched until the app knows a patient is on screen.
 
 No Vim account is needed until Module 7.
 

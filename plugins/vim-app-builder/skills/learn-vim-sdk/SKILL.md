@@ -25,7 +25,7 @@ If the learner isn't already in the learning starter, get them there first:
     npm install
     NEXT_PUBLIC_SIM_MODE=true npm run dev
 
-Then have them open http://localhost:8080/dev/harness. They should see a yellow "Simulator on" banner, a set of simulator controls on the left, and six module cards on the right, all reading "Not built yet".
+Then have them open http://localhost:8080/dev/harness. They should see a yellow "Simulator on" banner, a set of simulator controls on the left, and six module cards on the right. Modules 1–4 read "Not built yet". Modules 5 and 6 say they need Module 4 first — they fetch nothing until the app knows a patient is on screen, which is itself the first hint of how the modules depend on each other.
 
 The starter ships a lockfile, so `npm install` should just work. If someone has deleted it and install fails with an internal npm error mentioning "edgesOut", run it again with `--legacy-peer-deps` — it's a known npm resolver bug, not a problem with the project.
 
