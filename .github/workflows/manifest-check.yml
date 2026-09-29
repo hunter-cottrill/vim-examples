@@ -58,3 +58,16 @@ jobs:
             }
             console.log(`manifest.json matches templates/ (${inManifest.length} templates)`);
           '
+  learning:
+    # The learn-vim-sdk skill embeds each module's reference code. This fails the
+    # build if that code drifts from learning/reference-solution, if the starter's
+    # stubs stop matching the solution's functions, or if the two apps diverge
+    # anywhere other than vim-client.ts.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Learning path is in sync
+        run: node learning/check-learning.mjs
