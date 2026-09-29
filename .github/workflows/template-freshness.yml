@@ -46,10 +46,10 @@ jobs:
           - learning/starter
           - learning/reference-solution
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
       - name: Install (as pinned)
         working-directory: ${{ matrix.template }}
         run: npm ci || npm install
@@ -89,10 +89,10 @@ jobs:
           - learning/starter
           - learning/reference-solution
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
       - name: Install
         working-directory: ${{ matrix.template }}
         run: npm install
