@@ -86,6 +86,21 @@ mkdir -p .claude/skills
 cp -r node_modules/@vimconnect/app-sdk/skills/vim-app-sdk-docs .claude/skills/vim-app-sdk-docs
 ```
 
+## Learning the SDK
+
+If you'd rather understand the building blocks before an agent builds with them, there's a guided course.
+
+```bash
+npx degit hunter-cottrill/vim-examples/learning/starter vim-learning
+cd vim-learning && npm install
+NEXT_PUBLIC_SIM_MODE=true npm run dev
+```
+
+Then run `/vim-app-builder:learn` in Claude Code, from inside that folder. You build the SDK code yourself, one building block per module — sessions, the manifest, workflow events, context, the Entity API, writeback — checking each with `npm test` and breaking it in the simulator to see why it works the way it does. The course ends by going live in a sandbox EHR and one-shotting a real app.
+
+- `learning/starter/` — what learners start from
+- `learning/reference-solution/` — the finished version, for facilitators. CI checks that the course's reference code matches it exactly.
+
 ## Building your own app?
 
 Start from the reusable prompt in [`docs/build-a-vim-app-prompt.md`](docs/build-a-vim-app-prompt.md).

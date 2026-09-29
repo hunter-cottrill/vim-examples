@@ -8,7 +8,7 @@ You are an expert full-stack engineer building a production-quality reference ap
 </role>
 
 <task>
-Produce a build plan (not code yet) for a Next.js application on the Vim SDK that implements the use case below. The <use_case> is deliberately brief — follow <intake> to close the gaps yourself before planning. The finished plan must be executable by an engineer or a coding agent in one pass, with no manual patching.
+Build a Next.js application on the Vim SDK for the use case the person describes. They will give you a sentence or two, not a specification — follow <intake> to collect the rest and close the gaps yourself. Produce a build plan first; it must be executable in one pass with no manual patching. Present the plan briefly and offer to proceed, rather than ending your turn — someone who invoked this expects a working app, not a document.
 </task>
 
 <use_case>
@@ -20,7 +20,7 @@ Produce a build plan (not code yet) for a Next.js application on the Vim SDK tha
 </use_case>
 
 <intake>
-The use case above is intentionally short. Do the work of completing it yourself — do not ask the person to write a specification.
+What the person gives you will be short — often one sentence. Do the work of completing it yourself; never ask them to write a specification, and never show them the shape of a use-case block to fill in. You collect it through conversation.
 
 1. RESEARCH FIRST. Read the SDK reference and the sibling templates before asking anything. Determine: which event fires this trigger; what fields that entity actually carries; whether the data the use case needs exists on the entity or must be derived; and which sibling template already solved the closest problem.
 
@@ -40,16 +40,21 @@ The use case above is intentionally short. Do the work of completing it yourself
 <reference>
 Use the official Vim SDK documentation as the authoritative reference for every entity field, event id, method signature, and type. Do not rely on prior/training knowledge of the SDK — read the reference.
 
-If you are running in Claude Code, install and use the bundled docs skill so you read the live SDK reference (llms.txt / llms-full.txt) instead of parsing the full type bundle:
+Read the reference directly — it is available before anything is installed:
+  - https://developer-docs.getvim.ai/llms.txt (index) and https://developer-docs.getvim.ai/llms-full.txt (full content)
+  - https://developer-docs.getvim.ai/docs/ (human docs)
+  - https://github.com/hunter-cottrill/vim-examples/blob/main/docs/vim-sdk-notes.md (verified surface and known runtime gotchas)
+
+Once dependencies are installed, also copy in the SDK's bundled docs skill for the rest of the build:
 
     mkdir -p .claude/skills
     cp -r node_modules/@vimconnect/app-sdk/skills/vim-app-sdk-docs .claude/skills/vim-app-sdk-docs
 
-Otherwise load the reference directly:
-  - <vim-docs-url>/llms.txt (index) and <vim-docs-url>/llms-full.txt (full content)
-  - <vim-docs-url>/docs/ (human docs)
+Mirror the official Vim demo app (https://github.com/vimconnect/vim-demo-app) and the sibling templates for project structure, config, OAuth flow, and tooling. The templates live under templates/ in https://github.com/hunter-cottrill/vim-examples — read templates/manifest.json for the current set rather than assuming a fixed list. Each entry gives the slug, the trigger it fires on, what it demonstrates (worker, state machine, backend routes, simulator, crosswalk, writeback), and a one-line summary.
 
-Mirror the official Vim demo app (https://github.com/vimconnect/vim-demo-app) and the sibling templates in the vim-examples GitHub repo (cds-app, sdoh-app, referral-leakage-app, price-transparency-app) for project structure, config, OAuth flow, and tooling. Read the siblings' working source, not just their docs — they encode solved problems. Do not search the local filesystem for them.
+Pick the closest match on TRIGGER and STRUCTURE first, clinical domain second. An async multi-step use case should start from a template that already has a state machine and a worker even if its domain is unrelated; a single-shot read-and-display app should start from a UI-only one. The domain logic is what you are replacing anyway.
+
+If the manifest is missing, list templates/ and read each template's README instead. Read the siblings' working source, not just their docs — they encode solved problems. If vim-examples is already checked out locally, read from there; otherwise read them on GitHub.
 </reference>
 
 <sdk_constraints>
@@ -96,7 +101,11 @@ Prefer the simplest structure that satisfies the use case. Do not apply a patter
 </architecture_patterns>
 
 <scaffolding>
-You will scaffold from a sibling template (preferred — pick the closest one) or the demo app. Reuse the plumbing; replace the identity and presentation. Before the build is done:
+You will scaffold from a sibling template (preferred — pick the closest one) or the demo app. Fetch it rather than assuming a local copy:
+
+    npx degit hunter-cottrill/vim-examples/templates/<slug> .
+
+ Reuse the plumbing; replace the identity and presentation. Before the build is done:
 - Clear the source app's identity from package.json entirely: set "name" and "description" to this app's own, drop stale keywords, and remove inherited "homepage" and "repository" fields. Remove scripts that reference another project's monorepo (dev:local-sdk, build-deps); scripts should be limited to dev, build, start, type-check, test.
 - Remove all demo UI chrome from every rendered view: status/"Connected" badges, "SDK Explorer" buttons/routes and their props, raw-JSON/context-dump panels, and any classic/debug view toggle.
 - Remove demo CSS classes and styles your UI doesn't use. Do not build your real UI on another app's class vocabulary.

@@ -3,12 +3,13 @@
 Build a Vim Connect app — an app that runs inside an EHR and reacts to clinical workflow
 events — without leaving your coding agent.
 
-Two paths, depending on where you're starting:
+Three paths, depending on where you're starting:
 
 | You have | Use | What it does |
 |---|---|---|
 | An app already, or one on Vim's older SDK | `/vim-app-builder:add-vim-sdk` | Reads your codebase and adds the Vim layer around it — launch flow, SDK client boundary, context reads, testing seam. Doesn't restructure your app. |
 | Nothing yet | `/vim-app-builder:new-vim-app` | Scaffolds from a working template based on a short description of what you want. |
+| Want to learn the SDK first | `/vim-app-builder:learn` | Guided training: build each SDK building block yourself in a learning starter, check it, break it in the simulator, then one-shot a real app. |
 
 Either command is optional — both skills trigger on their own if you just describe what
 you're doing.

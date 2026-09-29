@@ -32,34 +32,38 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Full paths, so one list covers use-case templates and the learning path.
         template:
-          - cds-app
-          - sdoh-app
-          - referral-leakage-app
-          - price-transparency-app
-          - prior-auth-app
-          - care-coordination-app
-          - clinical-trials-app
-          - med-reconciliation-app
+          - templates/cds-app
+          - templates/sdoh-app
+          - templates/referral-leakage-app
+          - templates/price-transparency-app
+          - templates/prior-auth-app
+          - templates/care-coordination-app
+          - templates/clinical-trials-app
+          - templates/med-reconciliation-app
+          - templates/transition-of-care-app
+          - learning/starter
+          - learning/reference-solution
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
       - name: Install (as pinned)
-        working-directory: templates/${{ matrix.template }}
+        working-directory: ${{ matrix.template }}
         run: npm ci || npm install
       - name: Report resolved SDK version
-        working-directory: templates/${{ matrix.template }}
+        working-directory: ${{ matrix.template }}
         run: npm ls @vimconnect/app-sdk || true
       - name: Type-check
-        working-directory: templates/${{ matrix.template }}
+        working-directory: ${{ matrix.template }}
         run: npm run type-check
       - name: Test
-        working-directory: templates/${{ matrix.template }}
+        working-directory: ${{ matrix.template }}
         run: npm test
       - name: Build
-        working-directory: templates/${{ matrix.template }}
+        working-directory: ${{ matrix.template }}
         run: npm run build
 
   sdk-canary:
@@ -71,39 +75,43 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Full paths, so one list covers use-case templates and the learning path.
         template:
-          - cds-app
-          - sdoh-app
-          - referral-leakage-app
-          - price-transparency-app
-          - prior-auth-app
-          - care-coordination-app
-          - clinical-trials-app
-          - med-reconciliation-app
+          - templates/cds-app
+          - templates/sdoh-app
+          - templates/referral-leakage-app
+          - templates/price-transparency-app
+          - templates/prior-auth-app
+          - templates/care-coordination-app
+          - templates/clinical-trials-app
+          - templates/med-reconciliation-app
+          - templates/transition-of-care-app
+          - learning/starter
+          - learning/reference-solution
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
       - name: Install
-        working-directory: templates/${{ matrix.template }}
+        working-directory: ${{ matrix.template }}
         run: npm install
       - name: Upgrade to the latest SDK
-        working-directory: templates/${{ matrix.template }}
+        working-directory: ${{ matrix.template }}
         run: npm install @vimconnect/app-sdk@latest
       - name: Report pinned vs. resolved
-        working-directory: templates/${{ matrix.template }}
+        working-directory: ${{ matrix.template }}
         run: |
           echo "pinned in package.json:"
           node -p "require('./package.json').dependencies['@vimconnect/app-sdk']"
           echo "resolved after upgrade:"
           npm ls @vimconnect/app-sdk || true
       - name: Type-check
-        working-directory: templates/${{ matrix.template }}
+        working-directory: ${{ matrix.template }}
         run: npm run type-check
       - name: Test
-        working-directory: templates/${{ matrix.template }}
+        working-directory: ${{ matrix.template }}
         run: npm test
       - name: Build
-        working-directory: templates/${{ matrix.template }}
+        working-directory: ${{ matrix.template }}
         run: npm run build

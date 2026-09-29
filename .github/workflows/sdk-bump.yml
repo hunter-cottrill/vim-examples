@@ -45,8 +45,8 @@ jobs:
           PASSED=""
           FAILED=""
 
-          for dir in templates/*/; do
-            name=$(basename "$dir")
+          for dir in templates/*/ learning/*/; do
+            name="${dir%/}"
             [ -f "$dir/package.json" ] || continue
 
             current=$(node -p "require('./$dir/package.json').dependencies?.['@vimconnect/app-sdk'] ?? ''")
