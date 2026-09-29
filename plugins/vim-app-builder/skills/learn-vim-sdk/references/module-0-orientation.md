@@ -5,7 +5,7 @@
 ## Tour — show these, briefly
 
 - **`src/lib/vim-client.ts`** — the only file that talks to the SDK, and the only file they'll change in Modules 1–6. Six functions, each throwing `NotBuiltError` for now.
-- **`src/app/dev/harness/`** — the simulator. The left side plays the part of the EHR; the right side is the real app panel.
+- **`src/app/dev/harness/`** — the simulator. The left side plays the part of the EHR; the right side is the real app panel. Under the buttons, a feedback line reports what each click sent and whether anything received it. Right now every signal says *nothing listening yet* — nothing has subscribed. Watch that line change as modules get built.
 - **`src/dev/fixtures.ts`** — the sample data. Point out that the second patient is deliberately sparse: no name, no MRN, problems with no system or status. Real EHRs send records like this.
 - **`src/checks/`** — one check per module. `npm test` is how they'll know a module is done.
 - **`src/app/launch/`, `src/app/token/`** — the authentication flow. Already built; covered properly in Module 7.

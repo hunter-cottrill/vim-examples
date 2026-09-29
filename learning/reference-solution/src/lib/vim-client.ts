@@ -27,17 +27,26 @@ let simPatient: SimPatient | null = null;
 const simEventListeners: Array<(type: string) => void> = [];
 const simPresenceListeners: Array<(key: PresenceKey, present: boolean) => void> = [];
 
-/** DEV-ONLY. Fire a workflow event, as the EHR would. */
-export function simulateEvent(type: EventType): void {
-  if (!SIM_MODE) return;
+/**
+ * DEV-ONLY. Fire a workflow event, as the EHR would. Returns how many
+ * listeners received it — 0 means nothing is subscribed yet (Module 3).
+ */
+export function simulateEvent(type: EventType): number {
+  if (!SIM_MODE) return 0;
   simEventListeners.forEach((cb) => cb(type));
+  return simEventListeners.length;
 }
 
-/** DEV-ONLY. Put a patient in or out of a context key, as the EHR would. */
-export function simulateContext(key: PresenceKey, patientIndex: number | null): void {
-  if (!SIM_MODE) return;
+/**
+ * DEV-ONLY. Put a patient in or out of a context key, as the EHR would.
+ * Returns how many listeners received it — 0 means nothing is watching
+ * context yet (Module 4).
+ */
+export function simulateContext(key: PresenceKey, patientIndex: number | null): number {
+  if (!SIM_MODE) return 0;
   if (patientIndex !== null) simPatient = SIM_PATIENTS[patientIndex] ?? null;
   simPresenceListeners.forEach((cb) => cb(key, patientIndex !== null));
+  return simPresenceListeners.length;
 }
 
 export const SIM_PATIENT_LABELS = SIM_PATIENTS.map((p) => p.label);

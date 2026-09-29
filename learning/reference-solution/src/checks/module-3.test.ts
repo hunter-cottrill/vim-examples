@@ -8,9 +8,9 @@ it('Module 3 — delivers events to subscribers, and stops after unsubscribing',
   await unlessNotBuilt(skip, () => {
     const seen: string[] = [];
     const off = client.onWorkflowEvent((t) => seen.push(t));
-    client.simulateEvent('chart_open');
+    expect(client.simulateEvent('chart_open')).toBe(1); // the harness shows "delivered"
     off();
-    client.simulateEvent('encounter_open');
+    expect(client.simulateEvent('encounter_open')).toBe(0); // and "nothing listening" after unsubscribing
     expect(seen).toEqual(['chart_open']);
   });
 });

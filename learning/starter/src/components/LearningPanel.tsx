@@ -2,18 +2,22 @@
 import { useState, type ReactNode } from 'react';
 import type { Loadable } from '@/lib/learning-types';
 import type { LearningState } from '@/lib/use-learning';
+import { SIM_MODE } from '@/lib/vim-client';
 import { SimBanner } from './SimBanner';
 
 const card = { border: '1px solid #ddd', borderRadius: 8, padding: 12, marginBottom: 10 } as const;
 const muted = { color: '#777', fontSize: 13 } as const;
 
-function Module({ n, title, unbuilt, children }: { n: number; title: string; unbuilt: ReadonlySet<number>; children: ReactNode }) {
+function Module({ n, title, unbuilt, needs, children }: { n: number; title: string; unbuilt: ReadonlySet<number>; needs?: number; children: ReactNode }) {
   const notBuilt = unbuilt.has(n);
+  const blocked = !notBuilt && needs !== undefined && unbuilt.has(needs);
   return (
     <section style={{ ...card, ...(notBuilt ? { borderStyle: 'dashed', background: '#fafafa' } : {}) }}>
       <div style={{ fontSize: 12, color: '#888' }}>Module {n}</div>
       <h2 style={{ fontSize: 15, margin: '2px 0 8px' }}>{title}</h2>
-      {notBuilt ? <p style={muted}>Not built yet — open <code>src/lib/vim-client.ts</code> and find <code>MODULE {n}</code>.</p> : children}
+      {notBuilt ? <p style={muted}>Not built yet — open <code>src/lib/vim-client.ts</code> and find <code>MODULE {n}</code>.</p>
+        : blocked ? <p style={muted}>Needs Module {needs} first — nothing is fetched until the app knows a patient is on screen.</p>
+        : children}
     </section>
   );
 }
@@ -36,7 +40,9 @@ export function LearningPanel({ state }: { state: LearningState }) {
 
       <Module n={1} title="Session" unbuilt={state.unbuilt}>
         {state.connection === 'connecting' && <p style={muted}>Connecting…</p>}
-        {state.connection === 'connected' && <p>Connected. The hub knows the app is ready.</p>}
+        {state.connection === 'connected' && (SIM_MODE
+          ? <p>Built. In the simulator there's no session to start — this runs for real when you go live in Module 7.</p>
+          : <p>Connected. The hub knows the app is ready.</p>)}
         {state.connection === 'failed' && <p style={{ color: '#b00' }}>Couldn't connect: {state.connectionError}</p>}
       </Module>
 
@@ -63,7 +69,7 @@ export function LearningPanel({ state }: { state: LearningState }) {
         <p>{state.patientPresent ? 'A patient is on screen.' : 'No patient on screen.'}</p>
       </Module>
 
-      <Module n={5} title="Patient details" unbuilt={state.unbuilt}>
+      <Module n={5} title="Patient details" unbuilt={state.unbuilt} needs={4}>
         <LoadState value={state.patient}>
           {(p) => (
             <p style={{ margin: '0 0 8px' }}>
@@ -72,16 +78,16 @@ export function LearningPanel({ state }: { state: LearningState }) {
             </p>
           )}
         </LoadState>
-        <LoadState value={state.problems}>
+        {state.problems.kind !== 'idle' && <LoadState value={state.problems}>
           {(rows) => rows.length === 0 ? <p style={muted}>No problems on the list.</p> : (
             <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13 }}>
               {rows.map((r, i) => <li key={i}><code>{r.code ?? '—'}</code> {r.description ?? 'No description'}</li>)}
             </ul>
           )}
-        </LoadState>
+        </LoadState>}
       </Module>
 
-      <Module n={6} title="Writeback" unbuilt={state.unbuilt}>
+      <Module n={6} title="Writeback" unbuilt={state.unbuilt} needs={4}>
         {!state.writeback ? <p style={muted}>Waiting for a patient.</p> : !state.writeback.available ? (
           <p style={muted}>Not available here{state.writeback.reason ? ` — ${state.writeback.reason}` : '.'}</p>
         ) : (
