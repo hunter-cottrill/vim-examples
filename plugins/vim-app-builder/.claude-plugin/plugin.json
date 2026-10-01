@@ -1,6 +1,6 @@
 {
   "name": "vim-app-builder",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Build a Vim Connect app from a short description, add the Vim SDK to an app you already have, or learn the SDK hands-on, one building block at a time.",
   "author": {
     "name": "Hunter Cottrill"
