@@ -42,18 +42,21 @@ function LaunchPageContent() {
 
   if (error) {
     return (
-      <main style={{ padding: 24, fontFamily: 'system-ui, sans-serif' }}>
-        <h1 style={{ fontSize: 18 }}>Launch Error</h1>
-        <p style={{ color: '#b00020' }}>{error}</p>
+      <main className="page-center">
+        <div className="page-card">
+          <span className="badge badge-error">Launch error</span>
+          <h1>The app couldn&apos;t start</h1>
+          <p className="muted">{error}</p>
+        </div>
       </main>
     );
   }
-  return <main style={{ padding: 24, fontFamily: 'system-ui, sans-serif' }}>Redirecting to Vim Connect…</main>;
+  return <main className="page-center">Redirecting to Vim Connect…</main>;
 }
 
 export default function LaunchPage() {
   return (
-    <Suspense fallback={<main style={{ padding: 24 }}>Loading…</main>}>
+    <Suspense fallback={<main className="page-center">Loading…</main>}>
       <LaunchPageContent />
     </Suspense>
   );

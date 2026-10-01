@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { buildClientConfig } from '@/lib/client-config';
+import './vim-tokens.css';
+import './learning.css';
 
 // force-dynamic so buildClientConfig() reads process.env at request time.
 export const dynamic = 'force-dynamic';
@@ -13,7 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const config = buildClientConfig();
   return (
     <html lang="en">
-      <body style={{ margin: 0, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <body>
         {/* Inject runtime config for client components (no user input). */}
         <script dangerouslySetInnerHTML={{ __html: `window.__CONFIG__ = ${JSON.stringify(config)}` }} />
         {children}

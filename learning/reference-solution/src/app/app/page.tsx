@@ -37,7 +37,7 @@ function AppContent() {
 
 export default function AppPage() {
   return (
-    <Suspense fallback={<main style={{ padding: 16 }}>Loading…</main>}>
+    <Suspense fallback={<main className="page-center"><p className="muted">Loading…</p></main>}>
       <AppContent />
     </Suspense>
   );
