@@ -1,18 +1,24 @@
 # Module 3 · Workflow events
 
-**Goal:** understand what an event is — and, just as important, what it isn't.
+## Why it matters
+
+Events are how an app joins the clinical workflow. The moment a provider opens a chart, signs an order, or starts a referral is when an insight is worth the most — so events are what let an app speak up at exactly the right time.
 
 ## Predict
 
-> When a provider opens a patient's chart, the SDK can fire a `chart_open` event. Suppose the provider opens the chart first, and only *then* clicks your app's icon. Does your app hear about the chart opening?
+> A provider opens a patient's chart, and only *then* opens your app. Does your app hear about the chart opening?
 
-Let them commit to an answer. Most people say yes.
+### Answer key
+
+- **"No" — credit fully.** An event goes to whoever is listening when it happens. A UI app that wasn't open yet wasn't listening.
+- **"It depends — a Worker would" — credit fully; this is the sharpest answer.** A UI app only runs while its panel is open. A **Worker** is a background part of the app that runs whether or not the panel is open, so it *does* hear the event. That's exactly what Workers are for, and Module 9 builds one.
+- **"Yes"** — the common first guess. Don't just correct it; let the break exercise show them.
 
 ## Build
 
-`onWorkflowEvent(cb)`. Subscribe to all six event types and report each one by type. Return the unsubscribe function. In the simulator, add the callback to `simEventListeners`.
+`onWorkflowEvent(cb)` — subscribe to the six event types and report each one.
 
-**Reference implementation** — verified against `@vimconnect/app-sdk` 0.4.56. Build toward this in small steps and explain as you go; don't paste it wholesale.
+Reference implementation — Verified against `@vimconnect/app-sdk` 0.4.56. Build toward it in small steps; don't paste it wholesale.
 
 ```typescript
 // ─── MODULE 3 · Workflow events ─────────────────────────────────────────────
@@ -35,7 +41,7 @@ export function onWorkflowEvent(cb: (type: string) => void): () => void {
 }
 ```
 
-Point out that the callback only reports `event.type`. An event carries a reference to the entity, not the full record — details come from the Entity API in Module 5.
+Point at one thing: it only reports the event's *type*. An event tells you a moment happened. The details come from the Entity API, in Module 5.
 
 ## Check
 
@@ -43,15 +49,25 @@ Point out that the callback only reports `event.type`. An event carries a refere
 
 ## Break
 
-This is one of the two most important exercises in the course.
+1. Click **"Event only: chart_open"**. The feedback line says the event was **delivered**, and it appears in Module 3's log.
+2. Click **"Open chart"**. The event is delivered, but `chart_open:patient` says **nothing listening yet**.
 
-1. Pick a patient, then click **"Event only: chart_open"** under *Raw signals*. The feedback line says the event was **delivered**, and it appears in Module 3's log.
-2. Now click **"Open chart"**. Read the feedback line carefully: the event is *delivered*, but `chart_open:patient` says **nothing listening yet**. That's why Module 4 still can't tell a patient is here — the signal that says so has no one to receive it.
+Ask: *the provider opened the chart before the app. What would a UI app that only listened for events show?*
 
-Now the real question. Ask: *if your app had only this event to go on, and the provider had opened the chart before opening your app, what would your app show?* Nothing, forever. The event fired once, before the app was listening, and it doesn't fire again.
+- **Credit fully:** nothing. The event happened once, before the app was there to hear it.
 
-That's the answer to the predict question. An event reports a **moment**, once. It can't tell you what's true *now*. Module 4 fixes that.
+That's why Module 4 exists: an event tells you a moment happened, not what's on screen now.
+
+## Your app
+
+> What's the moment in the workflow your app should react to? Would your provider ever have the panel closed at that moment?
+
+If they answer yes to the second, note it — that's their reason to do Module 9.
+
+## Under the hood — only if asked
+
+The returned function unsubscribes; components call it when they unmount. An event's entities are references (`{ type: 'existing', id }`), not full records.
 
 ## Takeaway
 
-An event is a one-time notification of a moment. It can't tell you what's currently on screen.
+Events tell your app *when* something happened in the workflow — once, to whoever is listening.

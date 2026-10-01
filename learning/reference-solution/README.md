@@ -20,6 +20,6 @@ Apart from `src/lib/vim-client.ts`, this app and `learning/starter/` are identic
 
 ```bash
 npm install
-npm test                                  # all 15 checks pass
+npm test                                  # all 18 checks pass
 NEXT_PUBLIC_SIM_MODE=true npm run dev     # http://localhost:8080/dev/harness
 ```
