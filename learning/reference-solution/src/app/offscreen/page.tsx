@@ -40,18 +40,22 @@ function OffscreenContent() {
       setStatus('error');
       return;
     }
+    // If cleanup runs before the Worker has started, unregister it once it's
+    // ready, so a remount can never leave two Workers running.
     let stop: (() => void) | undefined;
+    let cancelled = false;
     void completeLaunch(code, stateParam)
       .then(startWorker)
       .then((unregister) => {
+        if (cancelled) { unregister(); return; }
         stop = unregister;
         setStatus('observing');
       })
       .catch((err) => setStatus(isNotBuilt(err) ? 'not_built' : 'error'));
-    return () => stop?.();
+    return () => { cancelled = true; stop?.(); };
   }, [searchParams]);
 
-  return <main style={{ padding: 16, fontFamily: 'system-ui, sans-serif', fontSize: 13, color: '#666' }}>{STATUS_TEXT[status]}</main>;
+  return <main className="page-center"><p className="muted">{STATUS_TEXT[status]}</p></main>;
 }
 
 export default function OffscreenPage() {
