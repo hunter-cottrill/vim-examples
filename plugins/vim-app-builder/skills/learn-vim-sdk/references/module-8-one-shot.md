@@ -1,10 +1,14 @@
 # Module 8 · One-shot a real app
 
-**Goal:** see how fast a full Vim app gets built with an agent — and recognise every building block in what it produces.
+## Why it matters
+
+This is the payoff. With an agent, a complete Vim app takes minutes. Having built each building block by hand, the learner can now tell whether what the agent built is right.
 
 ## Predict
 
-> You've now built each SDK building block by hand. How long do you think it takes an agent to build a complete app that uses all of them?
+> How long do you think it takes an agent to build a complete app using everything you've learned?
+
+No answer key — any guess works. Time it and compare.
 
 ## Build
 
@@ -12,27 +16,30 @@ In a fresh, empty folder — not inside the learning starter — have them run:
 
     /vim-app-builder:new-vim-app
 
-and describe an app in a sentence. Encourage them to pick something from their own world, not a toy. The agent will ask a few scoping questions, propose a plan, and build it.
-
-Let the build run. Time it.
+and describe the app from their Module 0 answer. Let the build run, and time it.
 
 ## Recognise
 
-This is the payoff of the whole course. When the build finishes, open the generated app's SDK client file together and ask them to find each building block:
+Open the generated app's SDK client together and find each building block:
 
 - Where does it **start the session**? (Module 1)
-- Does it **check the manifest**, or assume what's available? (Module 2)
-- What **events** does it listen for? (Module 3)
-- How does it know a **patient is present**, and when they've **left**? Does it watch both patient keys? (Module 4)
-- How does it **fetch** data, and does it cope with **missing fields**? (Module 5)
-- Does it **write back**, and does it follow the **ceremony**? (Module 6)
+- Does it **check what's available**, or assume? (Module 2)
+- Which **events** does it react to? (Module 3)
+- How does it know a **patient is on screen**, and when they've moved on? (Module 4)
+- How does it **fetch data**, and does it cope with **missing fields**? (Module 5)
+- Does it **write back**, with the provider's **permission**? (Module 6)
+- Did it build a **Worker**? Should it have? (Module 9 covers this, if there's time.)
 
-If any of those is missing or wrong in the generated app, that's the real lesson: they can now see it, and fix it.
+If anything is missing or wrong, that's the lesson: they can see it now, and fix it.
 
 ## Break
 
-Run the generated app in its simulator (`NEXT_PUBLIC_SIM_MODE=true npm run dev`, then `/dev/harness`) and have them try the Module 4 exercises on it: open a chart, open an encounter, leave. Does it handle them correctly?
+Run the generated app in its simulator, and try the Module 4 sequence on it: open a chart, open an encounter, leave. Does it hold up?
+
+## Your app
+
+> What would you change about what the agent built, before showing it to anyone?
 
 ## Takeaway
 
-An agent can build a Vim app in minutes. Knowing the building blocks is what lets you trust what it built.
+An agent can build a Vim app in minutes. Knowing the building blocks is what lets you trust it.

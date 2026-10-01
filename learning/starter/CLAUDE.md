@@ -12,7 +12,7 @@ A **learning starter**, not an app template. It exists to teach the Vim App SDK 
 
 ## Rules for working in this repo
 
-1. **Only `src/lib/vim-client.ts` changes during Modules 1–6.** The hook (`use-learning.ts`), the panel, and the harness are already written and work with every module. If a module seems to need a change elsewhere, that's a sign something's wrong.
+1. **Only `src/lib/vim-client.ts` changes during Modules 1–6, and only `src/lib/worker-client.ts` in Module 9.** The hook (`use-learning.ts`), the panel, and the harness are already written and work with every module. If a module seems to need a change elsewhere, that's a sign something's wrong.
 2. **Don't build ahead of the learner.** Each unbuilt function throws `NotBuiltError` on purpose — the panel and the checks depend on it. Build one module at a time, when asked.
 3. **Never edit `src/checks/` to make a check pass.** The checks define what "done" means for each module.
 4. **Every function needs a simulator branch.** Read from `src/dev/fixtures.ts` when `SIM_MODE` is true, through the same mapping code the live path uses.

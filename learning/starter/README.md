@@ -2,7 +2,7 @@
 
 A small Vim Connect app for learning the Vim App SDK one building block at a time.
 
-The authentication flow and a simulator are already working. What's missing is the SDK code itself: six functions in `src/lib/vim-client.ts`, one per building block. You build them in order, and the app's panel fills in as you go.
+The authentication flow and a simulator are already working. What's missing is the SDK code itself: six functions in `src/lib/vim-client.ts`, one per building block, plus two in `src/lib/worker-client.ts` for the optional Module 9. You build them in order, and the app's panel fills in as you go.
 
 This isn't a template for a real app. When you're ready to build one, use `/vim-app-builder:new-vim-app` — which is also the last module of the course.
 
@@ -49,6 +49,7 @@ Each module follows the same loop: predict what the SDK will do, build it, check
 | 6 | Writeback | `checkEncounterWriteback`, `appendEncounterNote` |
 | 7 | Going live | Register in Vim Console and connect to the sandbox EHR |
 | 8 | One-shot a real app | Build a full app, then find every building block in it |
+| 9 | Workers *(optional)* | `decideNotification`, `startWorker` in `worker-client.ts` |
 
 ## Check your progress
 
@@ -65,6 +66,9 @@ There's one check per module. A check is **skipped** until you build its functio
 - `src/lib/retry.ts` — retries reads through the brief race right after a chart opens (used in Module 5)
 - `src/app/dev/harness/` and `src/dev/fixtures.ts` — the simulator and its sample patients
 - `src/lib/use-learning.ts`, `src/components/` — the panel. You don't need to change these.
+- `src/app/offscreen/` and `src/lib/launch-auth.ts` — the Worker's sign-in, used in Module 9.
+
+The simulator is a development and learning tool. It never ships: real apps run with it off, and the harness doesn't exist in production.
 
 ## Turning the simulator off
 

@@ -21,3 +21,10 @@ export async function unlessNotBuilt(skip: (note?: string) => void, body: () => 
     throw err;
   }
 }
+
+/** Load the Worker client with the simulator on — the Module 9 counterpart of loadClient. */
+export async function loadWorker() {
+  vi.resetModules();
+  vi.stubEnv('NEXT_PUBLIC_SIM_MODE', 'true');
+  return import('../lib/worker-client');
+}

@@ -66,3 +66,11 @@ export class NotBuiltError extends Error {
 export function isNotBuilt(err: unknown): err is NotBuiltError {
   return err instanceof Error && err.name === 'NotBuiltError';
 }
+
+/** Module 9 — how long to wait before notifying about the same patient again. */
+export const NOTIFY_THROTTLE_MS = 30_000;
+
+/** Module 9 — whether the Worker should notify, and if not, why not. */
+export type NotifyDecision =
+  | { notify: true }
+  | { notify: false; reason: 'panel_open' | 'throttled' };

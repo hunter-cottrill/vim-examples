@@ -96,7 +96,7 @@ cd vim-learning && npm install
 NEXT_PUBLIC_SIM_MODE=true npm run dev
 ```
 
-Then run `/vim-app-builder:learn` in Claude Code, from inside that folder. You build the SDK code yourself, one building block per module — sessions, the manifest, workflow events, context, the Entity API, writeback — checking each with `npm test` and breaking it in the simulator to see why it works the way it does. The course ends by going live in a sandbox EHR and one-shotting a real app.
+Then run `/vim-app-builder:learn` in Claude Code, from inside that folder. You build the SDK code yourself, one building block per module — sessions, the manifest, workflow events, context, the Entity API, writeback — checking each with `npm test` and breaking it in the simulator to see why it works the way it does. Then you go live in a sandbox EHR and one-shot a real app. An optional final module adds a Worker, which reaches the provider even when your app's panel is closed.
 
 - `learning/starter/` — what learners start from
 - `learning/reference-solution/` — the finished version, for facilitators. CI checks that the course's reference code matches it exactly.

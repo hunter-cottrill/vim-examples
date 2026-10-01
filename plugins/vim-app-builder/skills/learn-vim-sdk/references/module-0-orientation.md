@@ -1,29 +1,45 @@
 # Module 0 · Orientation
 
-**Goal:** understand how the starter is put together before changing anything.
+## Why it matters
 
-## Tour — show these, briefly
+Before any code, the learner needs the picture of what a Vim app *is*. Give it in a few sentences:
 
-- **`src/lib/vim-client.ts`** — the only file that talks to the SDK, and the only file they'll change in Modules 1–6. Six functions, each throwing `NotBuiltError` for now.
-- **`src/app/dev/harness/`** — the simulator. The left side plays the part of the EHR; the right side is the real app panel. Under the buttons, a feedback line reports what each click sent and whether anything received it. Right now every signal says *nothing listening yet* — nothing has subscribed. Watch that line change as modules get built.
-- **`src/dev/fixtures.ts`** — the sample data. Point out that the second patient is deliberately sparse: no name, no MRN, problems with no system or status. Real EHRs send records like this.
-- **`src/checks/`** — one check per module. `npm test` is how they'll know a module is done.
-- **`src/app/launch/`, `src/app/token/`** — the authentication flow. Already built; covered properly in Module 7.
+> A provider works inside their EHR. The Vim Connect extension sits alongside it, and your app runs in its panel. Vim's job is to make every EHR look the same to your app — so you write one integration instead of one per EHR. Your app reacts to moments in the clinical workflow, reads what's on screen, and can write back into the chart with the provider's permission.
+
+Everything in the course is one piece of that picture.
+
+## Tour
+
+Show these briefly — the point is orientation, not detail:
+
+- **`src/lib/vim-client.ts`** — the only file that talks to the SDK, and the file they'll build in Modules 1–6.
+- **The harness** (`/dev/harness`) — the left side plays the EHR, the right side is the real app panel. Under the buttons, a feedback line reports what each click sent and whether anything received it.
+- **`src/dev/fixtures.ts`** — two sample patients. The second is deliberately incomplete, because real EHR data often is.
+- **`npm test`** — one check per module. It's how they'll know a module is done.
+
+## The simulator — say this plainly
+
+The simulator is a **development and learning tool**. It feeds the app sample data so you can build and test without an EHR, an account, or real patients. It never ships: real apps run with it off, and the harness page doesn't exist in production. The yellow banner shows whenever it's on, so it's never mistaken for a live EHR.
 
 ## Predict
 
-> The whole app talks to the SDK through one file. Why might that be worth the trouble, rather than calling the SDK from wherever it's needed?
+> The whole app talks to the SDK through one file. Why might that be worth doing?
 
-## The point
+### Answer key — for you, not the learner
 
-One boundary means the rest of the app works with plain local types. It's easier to test (the checks run with no EHR at all), easier to read, and when the SDK changes, only one file changes. It's also what makes the simulator possible: every function has a simulator branch in that one place.
+- **Credit fully:** separation of concerns; changes to the SDK touch one place; easier to test; the rest of the app doesn't depend on Vim directly.
+- **Then add, if they didn't say it:** it's also what makes the simulator possible — every function's simulator branch lives in that one file.
 
 ## Break
 
-Have them turn the simulator off — set `NEXT_PUBLIC_SIM_MODE=false`, restart the dev server, and reload `/dev/harness`. It returns 404. Turn it back on and restart.
+Have them click **Open chart** and read the feedback line. Every signal says *nothing listening yet*. Ask why: nothing has been built to receive it. That line will change as they go.
 
-Ask: *why did it need a restart, not just a reload?* The flag is read when the dev server starts and built into the page, so changing it needs a restart. Worth knowing now — it's the most common reason a live test "does nothing" later.
+## Your app
+
+> In one sentence, what would your app show a provider, and at what moment in their day?
+
+Keep their answer. Refer back to it at the end of each module.
 
 ## Takeaway
 
-All SDK access lives in one file, and the simulator lets everything run without an EHR.
+A Vim app reacts to the clinical workflow, through one integration that works across EHRs.
