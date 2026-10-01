@@ -12,11 +12,11 @@ No answer key — any guess works. Time it and compare.
 
 ## Build
 
-In a fresh, empty folder — not inside the learning starter — have them run:
+In a fresh, empty folder — not inside the learning starter — have them start the build skill and describe the app from their Module 0 answer. In Claude Code, that's:
 
     /vim-app-builder:new-vim-app
 
-and describe the app from their Module 0 answer. Let the build run, and time it.
+In other agents, ask it to build a new Vim Connect app, and it will pick up the same skill. Let the build run, and time it.
 
 ## Recognise
 

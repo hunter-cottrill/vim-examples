@@ -26,7 +26,7 @@ Then `npm install`. The starter ships a lockfile, so this should just work. If i
 
 Start the dev server with the simulator on (`NEXT_PUBLIC_SIM_MODE=true npm run dev`), and say clearly who owns it. Either run it in the background and handle restarts yourself — Module 7 needs one — or ask the learner to run it in a second terminal. Then have them open http://localhost:8080/dev/harness and run `npm test` together once.
 
-Tell the learner, before Module 0: Claude Code will ask to allow reading the plugin's course files. Those files live outside their project folder, which is why it asks. Choosing to allow it for the session means it won't ask again.
+Tell the learner, before Module 0: their coding agent will probably ask permission to read the course files. Those files are installed with the course, outside their project folder, which is why it asks. Allowing it for the session means it won't ask again.
 </setup>
 
 <the_loop>
