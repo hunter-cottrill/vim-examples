@@ -7,7 +7,7 @@
  * anything received it. That comes from the simulator's real listener counts,
  * not from a guess about which modules are built.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { connectToVim, SIM_PATIENT_LABELS, simulateContext, simulateEvent } from '@/lib/vim-client';
 import type { PresenceKey } from '@/lib/presence-tracker';
 import { isNotBuilt, type NotifyDecision } from '@/lib/learning-types';
@@ -33,6 +33,9 @@ interface Delivery {
 interface LastAction {
   action: string;
   deliveries: Delivery[];
+  /** Increments on every click, so even an identical report visibly refreshes. */
+  seq: number;
+  at: string;
 }
 
 function event(type: Parameters<typeof simulateEvent>[0]): Delivery {
@@ -45,12 +48,18 @@ function context(key: PresenceKey, patientIndex: number | null): Delivery {
 }
 
 function Feedback({ last }: { last: LastAction | null }) {
+  const ref = useRef<HTMLDivElement>(null);
+  // Bring each new report into view, in case it's below the fold.
+  useEffect(() => {
+    if (last) ref.current?.scrollIntoView({ block: 'nearest' });
+  }, [last]);
   if (!last) {
     return <p className="subtle">Click a button to send a signal. This line reports what was sent, and whether anything received it.</p>;
   }
   return (
-    <div role="status" className="feedback">
-      <p className="feedback-title"><strong>{last.action}</strong> sent:</p>
+    // key={seq} remounts the box on every click, which replays the pulse.
+    <div role="status" ref={ref} key={last.seq} data-seq={last.seq} className="feedback feedback--fresh">
+      <p className="feedback-title"><strong>{last.action}</strong> sent <span className="subtle">· {last.at}</span></p>
       <ul className="feedback-rows">
         {last.deliveries.map((d, i) => (
           <li key={i} className="feedback-row">
@@ -153,7 +162,12 @@ export function HarnessContent() {
   };
 
   // Signals are sent in order, left to right — the same order the EHR sends them.
-  const send = (action: string, signals: Array<() => Delivery>) => setLast({ action, deliveries: signals.map((s) => s()) });
+  const seq = useRef(0);
+  const send = (action: string, signals: Array<() => Delivery>) => {
+    const deliveries = signals.map((s) => s()); // send first, exactly once
+    seq.current += 1;
+    setLast({ action, deliveries, seq: seq.current, at: new Date().toLocaleTimeString() });
+  };
 
   return (
     <div className="harness">
