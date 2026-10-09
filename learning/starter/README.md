@@ -41,15 +41,15 @@ Each module follows the same loop: predict what the SDK will do, build it, check
 | # | Building block | What you'll build in `vim-client.ts` |
 |---|---|---|
 | 0 | Orientation | Nothing — a tour of the starter |
-| 1 | Starting a session | `connectToVim` |
-| 2 | The manifest | `describeSession` |
+| 1 | Connecting — quick | `connectToVim` |
+| 2 | What this EHR supports — quick | `describeSession` |
 | 3 | Workflow events | `onWorkflowEvent` |
-| 4 | Context and presence | `onPatientPresence` |
-| 5 | The Entity API | `fetchPatient`, `fetchProblems` |
-| 6 | Writeback | `checkEncounterWriteback`, `appendEncounterNote` |
+| 4 | What's on screen | `onPatientPresence` |
+| 5 | Reading the chart | `fetchPatient`, `fetchProblems` |
+| 6 | Writing back | `checkEncounterWriteback`, `appendEncounterNote` |
 | 7 | Going live | Register in Vim Console and connect to the sandbox EHR |
-| 8 | One-shot a real app | Build a full app, then find every building block in it |
-| 9 | Workers *(optional)* | `decideNotification`, `startWorker` in `worker-client.ts` |
+| 8 | Your own app | Build a full app, then find every building block in it |
+| 9 | Background apps *(optional)* | `decideNotification`, `startWorker` in `worker-client.ts` |
 
 ## Check your progress
 

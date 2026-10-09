@@ -1,23 +1,13 @@
-# Module 4 · Context — what's on screen now
+# Module 4 · What's on screen
 
-## Why it matters
+**Why it matters, in one sentence:** Context tells your app what's on screen right now, whenever it opens.
 
-Context is how an app stays in step with the provider. It reports what's true *right now* — which patient is open — however and whenever the app was opened. An app that follows context shows the right patient's information, and clears it when the provider moves on.
+**Ask exactly:**
+> Your app opens after a patient's chart is already open. How could it know which patient is on screen?
 
-## Predict
+**Build** `onPatientPresence`. One or two sentences: it watches the two places a patient can be open — their chart, and an encounter — and reports when a patient appears or leaves.
 
-> Module 3 showed an event can't tell you what's on screen. What could?
-
-### Answer key
-
-- **"Context" or "something that reports current state" — credit fully.**
-- **"The patient record" or "check whether there's a patient" — credit partly.** Right idea: the patient in view *is* what context holds. Refine it: context gives you the patient that's on screen, and tells you when that changes; the Entity API, in Module 5, then fetches their details.
-
-## Build
-
-`onPatientPresence(onPresent, onCleared)` — watch the patient context keys, and report when a patient arrives and leaves.
-
-Reference implementation — Verified against `@vimconnect/app-sdk` 0.4.56. Build toward it in small steps; don't paste it wholesale.
+Reference implementation — verified against the SDK version pinned in the reference solution. Build toward it; don't paste it at the learner.
 
 ```typescript
 // ─── MODULE 4 · Context ─────────────────────────────────────────────────────
@@ -54,34 +44,16 @@ export function onPatientPresence(onPresent: () => void, onCleared: () => void):
 }
 ```
 
-Point at two things:
+**Check:** `npm test`.
 
-- **Context reports current state**, so this works however the app was opened. It's the fix for what Module 3 couldn't do.
-- **It watches two keys.** Opening an encounter from a chart moves the patient from one context key to another. They haven't left, so the app shouldn't clear. The presence tracker, already written, handles that.
+**Try it (simulator):** click, in order: **Open chart**, **Open an encounter**, **Back to the chart**, **Leave the patient**. Watch the panel's presence card each time.
 
-## Check
+**Then ask:** "Does that match what you predicted?"
 
-`npm test` — the three Module 4 checks should pass. Read their names aloud; they're the module's lessons.
+**Explain, in two or three sentences:** context reports what's true *now*, so it works however the app was opened. Opening an encounter moves the patient from the chart to the encounter — they haven't left, so the app keeps them. Only when both are empty has the patient gone.
 
-## Break
+**Takeaway:** Context tells you what's on screen now, and when it changes.
 
-Have them predict, then click each in turn:
+## In the Mock EHR
 
-1. **Open chart** — a patient is on screen.
-2. **Open an encounter** — still on screen. They moved into a visit; they didn't leave.
-3. **Back to the chart** — still on screen.
-4. **Leave the patient** — cleared.
-
-Then the sharpest one: **"Context only: chart present"**, then **"Context only: chart empty"**. Presence appears and clears with no event at all. Context alone is enough.
-
-## Your app
-
-> When the provider switches to a different patient, what should your app do with what it was showing?
-
-## Under the hood — only if asked
-
-The two keys are `chart_open:patient` and `encounter_open:patient`. Their updates can arrive in either order, so the tracker waits briefly before deciding the patient has gone. If the platform adds an explicit "chart closed" event in future, context-based tracking still works.
-
-## Takeaway
-
-Context tells your app what's on screen now, and when it changes.
+Open a patient's chart *first*, then open the app — it already knows the patient. Then open an encounter, go back to the chart, and finally leave the patient. Watch the presence card at each step.
