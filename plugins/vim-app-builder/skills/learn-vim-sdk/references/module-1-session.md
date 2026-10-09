@@ -1,26 +1,12 @@
-# Module 1 · Starting a session
+# Module 1 · Connecting
 
-## Why it matters
+A quick module — no question. This code is the same in every app.
 
-This is the handshake that lets the app act on the provider's behalf, inside their EHR. Vim handles sign-in, so the app never sees the provider's EHR credentials — it receives a token scoped to this session.
+**Say:** "Before your app can do anything, it starts a session with Vim using a sign-in token, and tells Vim Connect it's ready. It's the same in every app, so I'll write it and we'll keep moving."
 
-**Learner writes this.** It's short, and it's worth writing one SDK call by hand. Offer it; accept "just build it".
+**Build** `connectToVim`. Then one or two sentences: it starts the session and tells Vim the app is ready. In the simulator, there's no session to start, so it returns straight away.
 
-## Predict
-
-> After sign-in, the app holds an access token. What does it need to do with it before it can read anything — and is there anything it should tell Vim Connect?
-
-### Answer key
-
-- **Credit fully:** start an SDK session with the token, and tell Vim Connect the app is ready.
-- **Credit partly:** "use the token to call the API" — right idea; the token starts a session, and the session is what makes calls.
-- **Then add:** until the app says it's ready, the panel treats it as still loading.
-
-## Build
-
-`connectToVim(accessToken)`.
-
-Reference implementation — Verified against `@vimconnect/app-sdk` 0.4.56. Build toward it in small steps; don't paste it wholesale.
+Reference implementation — verified against the SDK version pinned in the reference solution. Build toward it; don't paste it at the learner.
 
 ```typescript
 // ─── MODULE 1 · Starting a session ──────────────────────────────────────────
@@ -36,29 +22,12 @@ export async function connectToVim(accessToken: string): Promise<void> {
 }
 ```
 
-Point at two lines. The first, `if (SIM_MODE) return;`, is the simulator seam: in the simulator there's no session, so the function returns early. `setActivationStatus('ENABLED')` is the "I'm ready" signal.
+**Check:** `npm test` — the Module 1 check should pass.
 
-## Check
+## In the Mock EHR
 
-`npm test` — the Module 1 check should pass, and the panel's Module 1 card changes to "Built". That's all the simulator can prove. The real session only runs when they go live, in Module 7.
+Build it without discussion, as part of the workshop setup in SKILL.md.
 
-## Break
+## Only if asked
 
-Open `src/app/app/page.tsx` together and trace `connect`. The sign-in code arrives from Vim, its state is checked, the app's server exchanges the code for a token, and only then does `connectToVim` run.
-
-Ask: *why does the exchange happen on the server?*
-
-- **Credit fully:** it uses the client secret, which must never reach the browser.
-- **Credit partly:** "security" or "to keep it hidden" — right instinct; name the specific thing being protected, the client secret.
-
-## Your app
-
-> What would your app do in the first second after it starts — what would the provider see while it loads?
-
-## Under the hood — only if asked
-
-The token exchange is a standard OAuth authorization-code flow. The CSRF check stops another site from injecting a sign-in. Authorization codes are single-use, and there's no refresh flow: each launch signs in again.
-
-## Takeaway
-
-The app starts a session with its token, and tells the hub it's ready.
+Sign-in uses a standard OAuth flow. The app's server swaps a one-time code for the token, because that step uses the app's secret, which must never reach the browser. It's already built into the starter.

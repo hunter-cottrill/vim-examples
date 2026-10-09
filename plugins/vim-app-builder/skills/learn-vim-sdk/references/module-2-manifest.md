@@ -1,29 +1,12 @@
-# Module 2 · Checking what's available
+# Module 2 · What this EHR supports
 
-## Why it matters
+A quick module — no question.
 
-This is how one app works across many EHRs. Vim normalizes their differences, but it can't invent a capability an EHR doesn't have — so a well-built app asks what's available and adapts, instead of assuming. It's the difference between an app that quietly fails at one customer and an app that degrades gracefully everywhere.
+**Say:** "EHRs don't all support the same things. Your app can ask Vim what this one supports, and adapt."
 
-## Predict
+**Build** `describeSession`. Then one sentence: it reads the list of what this EHR session supports — events, data, and what can be written back.
 
-> If your app depends on a particular event or piece of data, how would you find out whether *this* EHR provides it?
-
-### Answer key
-
-There are two right answers, and the learner may give either:
-
-- **The manifest** — `sdk.ehr.getManifest()` describes everything the session supports: its events, context keys, entities, and which entities accept writeback. This is the whole-session picture.
-- **`getCapability`** — `getCapability('update')` on an entity's writeback namespace answers a narrower question: *can I write to this, right now?* It's real, and Module 6 uses it.
-
-Credit either. Then give them the other, and the distinction: the manifest for the overall picture, `getCapability` for a specific action at the moment of acting.
-
-If a learner names any other API, **check the installed types before saying it doesn't exist** — see the ground rules.
-
-## Build
-
-`describeSession()` — read the manifest and summarise it.
-
-Reference implementation — Verified against `@vimconnect/app-sdk` 0.4.56. Build toward it in small steps; don't paste it wholesale.
+Reference implementation — verified against the SDK version pinned in the reference solution. Build toward it; don't paste it at the learner.
 
 ```typescript
 // ─── MODULE 2 · Checking what's available ───────────────────────────────────
@@ -45,25 +28,10 @@ export function describeSession(): SessionSummary {
 }
 ```
 
-Point at one thing: `contextWriteback` may be missing entirely, which is why it's read with `?? {}`. Not every session supports writing anything.
+**Check:** `npm test`. Then point at the panel's Module 2 card, which now lists what's supported.
 
-## Check
+**One line to finish:** "If your app relies on something an EHR doesn't support, it doesn't error — it just never happens. That's why apps check."
 
-`npm test` — the Module 2 check should pass, and the panel now lists what the simulator supports.
+## In the Mock EHR
 
-## Break
-
-Compare the panel's event list with the six events in `ALL_EVENTS`, in Module 3's section of the file. The simulator supports two.
-
-Ask: *if your app relied on an event this session doesn't support, what would happen?*
-
-- **Credit fully:** nothing — it never fires, and there's no error.
-- **Then add:** that silence is why checking matters. In Module 7 they'll compare this with the real sandbox.
-
-## Your app
-
-> Which events or data does your app depend on most? What should it do in an EHR that doesn't provide one of them?
-
-## Takeaway
-
-Ask the session what it supports, and adapt. Don't assume.
+Build it without discussion, as part of the workshop setup in SKILL.md.

@@ -1,23 +1,13 @@
-# Module 6 · Writeback
+# Module 6 · Writing back
 
-## Why it matters
+**Why it matters, in one sentence:** Writeback puts your app's work into the chart — always with the provider's permission.
 
-Writeback turns an app from a sidebar into part of the clinical record — a note, a diagnosis, a documented action, without the provider retyping it. It's also where trust is earned: the provider stays in control of what goes into their chart.
+**Ask exactly:**
+> Before your app adds a note to a patient's encounter, what should it check?
 
-## Predict
+**Build** `checkEncounterWriteback` and `appendEncounterNote`. One or two sentences: they check whether writing is possible here, ask the provider if needed, then add the note.
 
-> Your app wants to add a note to the patient's encounter. What should it check first?
-
-### Answer key
-
-- **Credit fully:** whether writing is possible here, and whether the provider has given permission.
-- **Credit partly:** "that there's an encounter open" — right, and it's the first check. Then add the other two: is writing supported in this session, and has the provider allowed it?
-
-## Build
-
-`checkEncounterWriteback()` and `appendEncounterNote(text)`.
-
-Reference implementation — Verified against `@vimconnect/app-sdk` 0.4.56. Build toward it in small steps; don't paste it wholesale.
+Reference implementation — verified against the SDK version pinned in the reference solution. Build toward it; don't paste it at the learner.
 
 ```typescript
 // ─── MODULE 6 · Writeback ───────────────────────────────────────────────────
@@ -75,30 +65,16 @@ export async function appendEncounterNote(text: string): Promise<WriteResult> {
 }
 ```
 
-Point at the sequence, in plain terms. Every writeback follows the same steps: **check** that writing is possible, **ask** the provider if needed, **confirm** permission was granted, then **write**. The provider always has the final say.
+**Check:** `npm test`.
 
-## Check
+**Try it (simulator):** **Open chart**, type a note in the Writeback card, and click **Append to encounter note**. The result says *written*.
 
-`npm test` — the Module 6 check should pass.
+**Then ask:** "Does that match what you predicted?"
 
-## Break
+**Explain, in two or three sentences:** every write follows the same steps — check it's possible, ask the provider, confirm, then write. Where an EHR doesn't support writing, the app says so instead of failing.
 
-**Open chart**, type a note, and click **Append to encounter note**. The result is `written`.
+**Takeaway:** Writing back keeps the provider in control.
 
-Ask: *in a real EHR where this session can't write to the encounter, what should the app do?*
+## In the Mock EHR
 
-- **Credit fully:** tell the provider it isn't available here, instead of failing.
-
-In Module 7 they'll see what the sandbox allows.
-
-## Your app
-
-> What would your app write back to the chart, if anything? What should it do when it can't?
-
-## Under the hood — only if asked
-
-`getCapability` and the write target both come from the session. The types declare `sdk.ehr.context.encounter` as always present, but it's only there when writeback is configured — hence the `if (!encounter)` guard. `update` takes a nested object, `{ plan: { generalNotes } }`, not a dotted key, and `mode: 'append'` adds to the note instead of replacing it.
-
-## Takeaway
-
-Writeback puts your app's work into the chart — always with the provider's permission, and only where it's supported.
+Skip this module unless the facilitator says otherwise — it's covered on the slides.

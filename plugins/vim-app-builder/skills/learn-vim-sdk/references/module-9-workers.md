@@ -1,26 +1,13 @@
-# Module 9 · Workers — optional
+# Module 9 · Background apps — optional
 
-## Why it matters
+**Why it matters, in one sentence:** A Worker is the part of an app that runs in the background, so it can notify the provider even when the app isn't open.
 
-A UI app only runs while its panel is open. A **Worker** is the part of an app that runs in the background, whether or not the panel is open — so it can notice the right moment and tap the provider on the shoulder. It's the difference between a tool the provider has to remember to open and one that reaches them when it matters.
+**Ask exactly:**
+> A background app could notify the provider every time a chart opens. When should it stay quiet?
 
-This module is **optional**: do it if there's time after Module 8, or as a stretch goal for a team that finishes early. It builds in the learning starter, in a new file: `src/lib/worker-client.ts`.
+**Build** `decideNotification`, then `startWorker`. One or two sentences: the Worker listens for charts opening, and notifies only when the panel is closed and it hasn't just notified about the same patient.
 
-## Predict
-
-> Your Worker can notify the provider whenever a chart opens. When should it stay quiet?
-
-### Answer key
-
-- **Credit fully:** when the panel is already open, and when it has just notified about the same thing.
-- **Credit partly:** "when it's not relevant" — right; ask what that means concretely.
-- **Then add:** notifications are a trust budget. A Worker that nags gets switched off.
-
-## Build
-
-`decideNotification()` — the decision, as plain logic — then `startWorker()`, which registers for `chart_open` and notifies when the decision says to.
-
-Reference implementation — Verified against `@vimconnect/app-sdk` 0.4.56. Build toward it in small steps; don't paste it wholesale.
+Reference implementation — verified against the SDK version pinned in the reference solution. Build toward it; don't paste it at the learner.
 
 ```typescript
 // ─── MODULE 9 · Workers ─────────────────────────────────────────────────────
@@ -104,41 +91,20 @@ export async function startWorker(tokens: LaunchTokens): Promise<() => void> {
 }
 ```
 
-Point at two things:
+**Check:** `npm test`.
 
-- **A Worker is a different SDK object.** It starts with `initWorkerVimSDK`, and it *registers* for events rather than subscribing — set up once, the hub calls it for every matching event, panel open or not. That's why it lives in its own file.
-- **It only notifies when it should.** Never while the panel is open, and not again for the same patient until the throttle window passes.
+**Try it (simulator)**, in the Worker box under the controls:
+1. Leave **UI panel open** ticked, then **Open chart** — the Worker stays quiet.
+2. Untick it, then **Open chart** — a notification appears.
+3. **Open chart** again straight away — quiet, since it just notified.
+4. Pick the other patient, then **Open chart** — a notification.
 
-## Check
+**Then ask:** "Does that match what you predicted?"
 
-`npm test` — the three Module 9 checks should pass.
+**Explain, in two or three sentences:** notifications are a trust budget. A Worker that nags gets switched off, so it stays quiet when the provider's already looking, and doesn't repeat itself. Only build one if the provider would miss something with the app closed.
 
-## Break
+**Takeaway:** A Worker reaches the provider when the app is closed — and knows when to stay quiet.
 
-The Worker box in the harness, under the controls, now shows the Worker running.
+## In the Mock EHR
 
-1. Leave **UI panel open** ticked, then **Open chart**. The Worker stays quiet: the panel is already open.
-2. Untick it, then **Open chart**. A notification appears.
-3. **Open chart** again straight away. Quiet — it notified about this patient a moment ago.
-4. Pick the other patient and **Open chart**. A notification: different patient.
-
-Ask: *why is stage 3 right, even though a chart just opened?*
-
-## Go live
-
-1. In Vim Console, set the **Worker Launch Endpoint** to `http://localhost:8080/offscreen`. In Module 7 it was left blank, because the app served no Worker. Now it does — registration must match what the app serves.
-2. Restart the dev server with the simulator off.
-3. In the sandbox, close the app's panel, then open a patient chart. A notification arrives.
-4. Open the panel and open another chart. No notification.
-
-## Your app
-
-> Would your provider miss something if your app only ran with the panel open? If not, your app doesn't need a Worker — and that's a fine answer.
-
-## Under the hood — only if asked
-
-Each event gives the Worker a short-lived handle. Declaring `operations: ['notify']` is what gives the handle a hub to notify through, and the handle should be closed when the Worker decides not to act. Whether the panel is open is read from the Worker SDK itself, `worker.hub.appState.isAppOpen`, not from the handle. The notification carries a `launchPayload`, so tapping it opens the app on the right patient. The `/offscreen` page runs the same sign-in as the UI app; it's prebuilt.
-
-## Takeaway
-
-A Worker reaches the provider when the panel is closed — and earns their trust by knowing when to stay quiet.
+Only if the facilitator says so. The Worker also needs its launch endpoint — `http://localhost:8080/offscreen` — registered for the app; the facilitator will confirm it is.

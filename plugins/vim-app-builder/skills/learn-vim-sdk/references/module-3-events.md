@@ -1,24 +1,13 @@
-# Module 3 · Workflow events
+# Module 3 · Events
 
-## Why it matters
+**Why it matters, in one sentence:** Events tell your app the moment something happens — like a provider opening a chart.
 
-Events are how an app joins the clinical workflow. The moment a provider opens a chart, signs an order, or starts a referral is when an insight is worth the most — so events are what let an app speak up at exactly the right time.
+**Ask exactly:**
+> If a provider opens a patient's chart, and only then opens your app, does your app find out the chart was opened?
 
-## Predict
+**Build** `onWorkflowEvent`. One or two sentences: it listens for moments in the provider's workflow — a chart opening, an order being signed — and reports each one.
 
-> A provider opens a patient's chart, and only *then* opens your app. Does your app hear about the chart opening?
-
-### Answer key
-
-- **"No" — credit fully.** An event goes to whoever is listening when it happens. A UI app that wasn't open yet wasn't listening.
-- **"It depends — a Worker would" — credit fully; this is the sharpest answer.** A UI app only runs while its panel is open. A **Worker** is a background part of the app that runs whether or not the panel is open, so it *does* hear the event. That's exactly what Workers are for, and Module 9 builds one.
-- **"Yes"** — the common first guess. Don't just correct it; let the break exercise show them.
-
-## Build
-
-`onWorkflowEvent(cb)` — subscribe to the six event types and report each one.
-
-Reference implementation — Verified against `@vimconnect/app-sdk` 0.4.56. Build toward it in small steps; don't paste it wholesale.
+Reference implementation — verified against the SDK version pinned in the reference solution. Build toward it; don't paste it at the learner.
 
 ```typescript
 // ─── MODULE 3 · Workflow events ─────────────────────────────────────────────
@@ -41,33 +30,18 @@ export function onWorkflowEvent(cb: (type: string) => void): () => void {
 }
 ```
 
-Point at one thing: it only reports the event's *type*. An event tells you a moment happened. The details come from the Entity API, in Module 5.
+**Check:** `npm test`.
 
-## Check
+**Try it (simulator):** click **Event only: chart_open** — the line under the buttons says *delivered*, and it shows in the panel's event log. Then click **Open chart**: the event is delivered, but the patient line still says *nothing listening yet*.
 
-`npm test` — the Module 3 check should pass.
+**Then ask:** "Does that match what you predicted?"
 
-## Break
+**Explain, in two or three sentences:** an event goes out once, to whoever is listening at that moment. An app that opens later has already missed it — so an event can't tell you who's on screen now. That's what Module 4 is for.
 
-1. Click **"Event only: chart_open"**. The feedback line says the event was **delivered**, and it appears in Module 3's log.
-2. Click **"Open chart"**. The event is delivered, but `chart_open:patient` says **nothing listening yet**.
+If they said a background app would hear it: they're right. That's a Worker, and Module 9 builds one.
 
-Ask: *the provider opened the chart before the app. What would a UI app that only listened for events show?*
+**Takeaway:** Events tell you *when* something happened — once, to whoever's listening.
 
-- **Credit fully:** nothing. The event happened once, before the app was there to hear it.
+## In the Mock EHR
 
-That's why Module 4 exists: an event tells you a moment happened, not what's on screen now.
-
-## Your app
-
-> What's the moment in the workflow your app should react to? Would your provider ever have the panel closed at that moment?
-
-If they answer yes to the second, note it — that's their reason to do Module 9.
-
-## Under the hood — only if asked
-
-The returned function unsubscribes; components call it when they unmount. An event's entities are references (`{ type: 'existing', id }`), not full records.
-
-## Takeaway
-
-Events tell your app *when* something happened in the workflow — once, to whoever is listening.
+With the app's panel open, open a patient's chart: the event appears in the app. Then close the panel, open a different patient, and reopen the panel. No event for that patient — the app wasn't open to hear it.
