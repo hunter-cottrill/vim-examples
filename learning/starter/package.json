@@ -1,7 +1,7 @@
 {
   "name": "vim-learning-starter",
   "version": "0.1.0",
-  "description": "Learning starter for the Vim App SDK \u2014 auth plumbing and simulator ready, with an empty panel you build out one SDK building block at a time.",
+  "description": "Learning starter for the Vim App SDK — auth plumbing and simulator ready, with an empty panel you build out one SDK building block at a time.",
   "license": "MIT",
   "private": true,
   "engines": {
@@ -15,7 +15,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@vimconnect/app-sdk": "0.4.56",
+    "@vimconnect/app-sdk": "0.4.58",
     "next": "^16.2.12",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",

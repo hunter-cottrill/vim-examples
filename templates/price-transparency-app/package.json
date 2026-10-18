@@ -1,7 +1,7 @@
 {
   "name": "vim-price-transparency-app",
   "version": "1.0.0",
-  "description": "Price transparency starter app on the Vim Connect SDK \u2014 shows the patient's estimated cost when a provider places an order",
+  "description": "Price transparency starter app on the Vim Connect SDK — shows the patient's estimated cost when a provider places an order",
   "license": "MIT",
   "keywords": [
     "vim-connect",
@@ -23,7 +23,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@vimconnect/app-sdk": "0.4.56",
+    "@vimconnect/app-sdk": "0.4.58",
     "next": "^16.2.12",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
